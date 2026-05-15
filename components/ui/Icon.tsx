@@ -37,6 +37,8 @@ const ICONS: Record<string, string | string[]> = {
   play:          'M5 3l14 9-14 9V3z',
   clock:         ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20','M12 6v6l4 2'],
   paperclip:     'M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48',
+  building:      ['M3 21h18','M5 21V7l7-4 7 4v14','M9 21v-4h6v4','M9 9h1v1H9z','M14 9h1v1h-1z','M9 14h1v1H9z','M14 14h1v1h-1z'],
+  trash:         ['M3 6h18','M8 6V4h8v2','M19 6l-1 14H6L5 6'],
 }
 
 interface IconProps {

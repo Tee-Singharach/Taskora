@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
-import { STATUS_INFO, PRIORITY_INFO, DEPARTMENTS, fmtDate, fmtRelative, statusBadgeClass, deptById } from '@/lib/utils'
+import { STATUS_INFO, PRIORITY_INFO, fmtDate, fmtRelative, statusBadgeClass } from '@/lib/utils'
 import Avatar from '@/components/ui/Avatar'
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
@@ -84,7 +84,7 @@ export default function DashboardPage() {
     slate: '#64748B',
   }
 
-  const deptStats = DEPARTMENTS.map(dept => {
+  const deptStats = store.departments.map(dept => {
     const deptRequests = requests.filter(r => r.department === dept.id)
     const active = deptRequests.filter(r => !['completed','rejected'].includes(r.status)).length
     const completed = deptRequests.filter(r => r.status === 'completed').length
@@ -108,9 +108,11 @@ export default function DashboardPage() {
           <h1 className="text-[22px] font-semibold tracking-tighter m-0">แดชบอร์ด</h1>
           <div className="text-[13px] text-gray-500 mt-1">สวัสดี {currentUser?.name} · ภาพรวมระบบคำร้องทั้งหมด</div>
         </div>
-        <button className="flex items-center gap-1.5 px-4 py-2 rounded-md font-medium text-[13px] bg-indigo-600 text-white hover:bg-indigo-700 transition-colors" onClick={() => router.push('/requests/new')}>
-          + สร้างคำร้องใหม่
-        </button>
+        {currentUser?.role === 'staff' && (
+          <button className="flex items-center gap-1.5 px-4 py-2 rounded-md font-medium text-[13px] bg-indigo-600 text-white hover:bg-indigo-700 transition-colors" onClick={() => router.push('/requests/new')}>
+            + สร้างคำร้องใหม่
+          </button>
+        )}
       </div>
 
       {/* Stat cards */}

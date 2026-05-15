@@ -25,6 +25,12 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       return
     }
 
+    // Manager can't create requests
+    if (role === 'manager' && pathname === '/requests/new') {
+      router.replace('/dashboard')
+      return
+    }
+
     // Officer path access guard
     if (role !== 'officer' && isOfficerPath) {
       router.replace('/dashboard')

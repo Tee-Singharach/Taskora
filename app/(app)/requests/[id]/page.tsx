@@ -169,7 +169,7 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
               <dt className="text-gray-500 text-[12px]">ผู้อนุมัติ</dt>
               <dd className="m-0 text-gray-900">{approver?.name ?? '—'}</dd>
               <dt className="text-gray-500 text-[12px]">ฝ่าย</dt>
-              <dd className="m-0 text-gray-900">{deptById(request.department)?.name ?? request.department}</dd>
+              <dd className="m-0 text-gray-900">{deptById(request.department, store.departments)?.name ?? request.department}</dd>
               <dt className="text-gray-500 text-[12px]">วันที่สร้าง</dt>
               <dd className="m-0 text-gray-900">{fmtDate(request.createdAt)}</dd>
               <dt className="text-gray-500 text-[12px]">วันกำหนด</dt>

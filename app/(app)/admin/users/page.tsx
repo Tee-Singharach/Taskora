@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useApp } from '@/components/providers/AppProvider'
-import { ROLE_INFO, ROLE_ORDER, DEPARTMENTS, avatarInitials, deptById } from '@/lib/utils'
+import { ROLE_INFO, ROLE_ORDER, avatarInitials, deptById } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 import type { Role } from '@/lib/types'
@@ -14,10 +14,11 @@ interface UserForm {
   dept: string
 }
 
-const EMPTY_FORM: UserForm = { name: '', email: '', role: 'staff', dept: DEPARTMENTS[0].id }
+const EMPTY_FORM: UserForm = { name: '', email: '', role: 'staff', dept: '' }
 
 export default function AdminUsersPage() {
-  const { store, currentUser, addUser, updateUser, showToast } = useApp()
+  const { store, currentUser, addUser, updateUser, deleteUser, showToast } = useApp()
+  const departments = store.departments
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<Role | 'all'>('all')
   const [showModal, setShowModal] = useState(false)
@@ -46,7 +47,7 @@ export default function AdminUsersPage() {
   })
 
   function openCreate() {
-    setForm(EMPTY_FORM)
+    setForm({ ...EMPTY_FORM, dept: departments[0]?.id ?? '' })
     setErrors({})
     setEditId(null)
     setShowModal(true)
@@ -156,13 +157,20 @@ export default function AdminUsersPage() {
                     <span className={`px-2 py-0.5 rounded-full text-[11px] border bg-${ROLE_INFO[u.role].color}-50 text-${ROLE_INFO[u.role].color}-700 border-${ROLE_INFO[u.role].color}-200`}>{ROLE_INFO[u.role].th}</span>
                   </td>
                   <td className="px-4 py-3 text-gray-600">
-                    {deptById(u.dept)?.name ?? u.dept}
+                    {deptById(u.dept, departments)?.name ?? u.dept}
                   </td>
                   <td className="px-4 py-3 text-gray-500">{u.email}</td>
                   <td className="px-4 py-3 text-right">
-                    <button className="flex items-center gap-1.5 text-gray-500 hover:text-indigo-600 transition-colors" onClick={() => openEdit(u.id)}>
-                      <Icon name="edit" size={13}/> แก้ไข
-                    </button>
+                    <div className="flex items-center justify-end gap-3">
+                      <button className="flex items-center gap-1.5 text-gray-500 hover:text-indigo-600 transition-colors" onClick={() => openEdit(u.id)}>
+                        <Icon name="edit" size={13}/> แก้ไข
+                      </button>
+                      {u.id !== currentUser?.id && (
+                        <button className="flex items-center gap-1.5 text-gray-400 hover:text-red-600 transition-colors" onClick={() => { if (confirm(`ลบผู้ใช้ "${u.name}" ใช่หรือไม่?`)) deleteUser(u.id) }}>
+                          <Icon name="trash" size={13}/> ลบ
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -204,7 +212,7 @@ export default function AdminUsersPage() {
                   <label className="text-[12px] font-medium text-gray-500">ฝ่าย</label>
                   <select className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500" value={form.dept}
                     onChange={e => setForm(p => ({ ...p, dept: e.target.value }))}>
-                    {DEPARTMENTS.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 </div>
               </div>

@@ -1,4 +1,13 @@
-import type { User, Request, AuditEntry, RequestEvent, RequestAttachment } from './types'
+import type { User, Request, AuditEntry, RequestEvent, RequestAttachment, Department } from './types'
+
+export const MOCK_DEPARTMENTS: Department[] = [
+  { id: 'it',    name: 'ฝ่ายเทคโนโลยีสารสนเทศ', short: 'IT',        color: 'indigo' },
+  { id: 'hr',    name: 'ฝ่ายบุคคล',               short: 'HR',        color: 'rose' },
+  { id: 'fin',   name: 'ฝ่ายการเงิน',              short: 'Finance',   color: 'emerald' },
+  { id: 'proc',  name: 'ฝ่ายจัดซื้อ',              short: 'Procure',   color: 'amber' },
+  { id: 'mkt',   name: 'ฝ่ายการตลาด',              short: 'Marketing', color: 'violet' },
+  { id: 'admin', name: 'ฝ่ายธุรการ',               short: 'Admin',     color: 'sky' },
+]
 
 export const MOCK_USERS: User[] = [
   { id: 'u01', name: 'สมชาย รุ่งโรจน์',          role: 'staff',   dept: 'mkt',   email: 'somchai.r@mojiflow.co' },

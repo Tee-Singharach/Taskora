@@ -1,4 +1,11 @@
 export type Role = 'staff' | 'officer' | 'manager' | 'admin'
+
+export interface Department {
+  id: string
+  name: string
+  short: string
+  color: string
+}
 export type RequestStatus = 'open' | 'in_progress' | 'waiting_approval' | 'completed' | 'rejected'
 export type RequestPriority = 'low' | 'normal' | 'high' | 'urgent'
 export type AuditCategory = 'workflow' | 'user' | 'security' | 'system'
@@ -53,6 +60,7 @@ export interface AuditEntry {
 
 export interface AppStore {
   users: User[]
+  departments: Department[]
   requests: Request[]
   auditLog: AuditEntry[]
   currentUserId: string

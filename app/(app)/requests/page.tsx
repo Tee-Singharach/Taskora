@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
-import { STATUS_INFO, PRIORITY_INFO, DEPARTMENTS, fmtDate, fmtRelative, statusBadgeClass, deptById } from '@/lib/utils'
+import { STATUS_INFO, PRIORITY_INFO, fmtDate, fmtRelative, statusBadgeClass, deptById } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 import type { RequestStatus, RequestPriority } from '@/lib/types'
@@ -68,7 +68,7 @@ export default function RequestsPage() {
           </h1>
           <div className="text-[13px] text-gray-500 mt-1">{filtered.length} รายการ</div>
         </div>
-        {currentUser?.role !== 'officer' && (
+        {currentUser?.role === 'staff' && (
           <button className="flex items-center gap-1.5 px-4 py-2 rounded-md font-medium text-[13px] bg-indigo-600 text-white hover:bg-indigo-700 transition-colors" onClick={() => router.push('/requests/new')}>
             + สร้างคำร้องใหม่
           </button>
@@ -106,7 +106,7 @@ export default function RequestsPage() {
 
         <select className="bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={deptFilter} onChange={e => setDeptFilter(e.target.value)}>
           <option value="all">ทุกฝ่าย</option>
-          {DEPARTMENTS.map(d => <option key={d.id} value={d.id}>{d.short}</option>)}
+          {store.departments.map(d => <option key={d.id} value={d.id}>{d.short}</option>)}
         </select>
 
         <select className="bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value as RequestPriority | 'all')}>
@@ -153,7 +153,7 @@ export default function RequestsPage() {
                     <td className="px-4 py-3 font-mono text-[12px] text-gray-500">{r.id}</td>
                     <td className="px-4 py-3 text-gray-900">
                       <div className="font-medium truncate max-w-[340px]">{r.title}</div>
-                      <div className="text-[11px] text-gray-400 mt-0.5">{deptById(r.department)?.name ?? r.department}</div>
+                      <div className="text-[11px] text-gray-400 mt-0.5">{deptById(r.department, store.departments)?.name ?? r.department}</div>
                     </td>
                     <td className="px-4 py-3"><span className={statusBadgeClass(r.status)}>{STATUS_INFO[r.status].label}</span></td>
                     <td className="px-4 py-3">

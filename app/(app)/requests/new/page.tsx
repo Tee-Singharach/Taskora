@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
 import Icon from '@/components/ui/Icon'
-import { DEPARTMENTS } from '@/lib/utils'
 import type { RequestPriority } from '@/lib/types'
 
 export default function NewRequestPage() {
@@ -12,9 +11,15 @@ export default function NewRequestPage() {
   const router = useRouter()
 
   const currentUser = store.users.find(u => u.id === store.currentUserId)
+  const departments = store.departments
 
   if (currentUser?.role === 'officer') {
     router.replace('/officer/inbox')
+    return null
+  }
+
+  if (currentUser?.role === 'manager') {
+    router.replace('/dashboard')
     return null
   }
 
@@ -24,7 +29,7 @@ export default function NewRequestPage() {
     title: '',
     description: '',
     priority: 'normal' as RequestPriority,
-    department: currentUser?.dept ?? DEPARTMENTS[0].id,
+    department: currentUser?.dept ?? departments[0]?.id ?? '',
     dueAt: '',
     attachments: [] as File[],
   })
@@ -131,7 +136,7 @@ export default function NewRequestPage() {
             <div className="flex flex-col gap-1.5">
               <label className="text-[12px] font-medium text-gray-500">ฝ่าย / แผนก</label>
               <select className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500" value={form.department} onChange={e => set('department', e.target.value)}>
-                {DEPARTMENTS.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import type { RequestStatus, RequestPriority, Role, Request } from './types'
+import type { RequestStatus, RequestPriority, Role, Request, Department } from './types'
 
 /* ── Date helpers ────────────────────────────────── */
 const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
@@ -96,8 +96,8 @@ export const DEPARTMENTS = [
   { id: 'admin', name: 'ฝ่ายธุรการ',               short: 'Admin',    color: 'sky' },
 ]
 
-export function deptById(id: string) {
-  return DEPARTMENTS.find(d => d.id === id)
+export function deptById(id: string, departments: Department[] = DEPARTMENTS) {
+  return departments.find(d => d.id === id)
 }
 
 /* ── Avatar color ────────────────────────────────── */

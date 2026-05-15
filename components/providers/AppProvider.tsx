@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react'
-import type { AppStore, User, Request, RequestStatus, RequestPriority, ToastItem, AuditEntry } from '@/lib/types'
+import type { AppStore, User, Department, Request, RequestStatus, RequestPriority, ToastItem, AuditEntry } from '@/lib/types'
 import { loadStore, saveStore } from '@/lib/store'
 import { genId, fmtDate } from '@/lib/utils'
 
@@ -21,6 +21,10 @@ interface AppContextType {
   addComment: (id: string, msg: string) => void
   addUser: (data: Omit<User, 'id'>) => void
   updateUser: (id: string, patch: Partial<User>) => void
+  deleteUser: (id: string) => void
+  addDept: (data: Department) => void
+  updateDept: (id: string, patch: Partial<Omit<Department, 'id'>>) => void
+  deleteDept: (id: string) => void
   toasts: ToastItem[]
   showToast: (type: ToastItem['type'], message: string) => void
   removeToast: (id: string) => void
@@ -29,7 +33,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | null>(null)
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [store, setStore] = useState<AppStore>({ users: [], requests: [], auditLog: [], currentUserId: 'u01', schemaVersion: 2 })
+  const [store, setStore] = useState<AppStore>({ users: [], departments: [], requests: [], auditLog: [], currentUserId: 'u01', schemaVersion: 3 })
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [mounted, setMounted] = useState(false)
 
@@ -237,6 +241,48 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     showToast('success', 'อัปเดตข้อมูลผู้ใช้แล้ว')
   }, [showToast, pushAudit])
 
+  const deleteUser = useCallback((id: string) => {
+    setStore(prev => {
+      const u = prev.users.find(u => u.id === id)
+      return {
+        ...prev,
+        users: prev.users.filter(u => u.id !== id),
+        auditLog: [...prev.auditLog, pushAudit(prev, 'ลบผู้ใช้', u?.name ?? id, '', 'user')],
+      }
+    })
+    showToast('warning', 'ลบผู้ใช้แล้ว')
+  }, [showToast, pushAudit])
+
+  const addDept = useCallback((data: Department) => {
+    setStore(prev => ({
+      ...prev,
+      departments: [...prev.departments, data],
+      auditLog: [...prev.auditLog, pushAudit(prev, 'สร้างแผนกใหม่', data.id, data.name, 'system')],
+    }))
+    showToast('success', 'เพิ่มแผนกเรียบร้อย')
+  }, [showToast, pushAudit])
+
+  const updateDept = useCallback((id: string, patch: Partial<Omit<Department, 'id'>>) => {
+    setStore(prev => ({
+      ...prev,
+      departments: prev.departments.map(d => d.id === id ? { ...d, ...patch } : d),
+      auditLog: [...prev.auditLog, pushAudit(prev, 'แก้ไขข้อมูลแผนก', id, '', 'system')],
+    }))
+    showToast('success', 'อัปเดตแผนกแล้ว')
+  }, [showToast, pushAudit])
+
+  const deleteDept = useCallback((id: string) => {
+    setStore(prev => {
+      const d = prev.departments.find(d => d.id === id)
+      return {
+        ...prev,
+        departments: prev.departments.filter(d => d.id !== id),
+        auditLog: [...prev.auditLog, pushAudit(prev, 'ลบแผนก', d?.name ?? id, '', 'system')],
+      }
+    })
+    showToast('warning', 'ลบแผนกแล้ว')
+  }, [showToast, pushAudit])
+
   const currentUser = useMemo(() => store.users.find(u => u.id === store.currentUserId), [store.users, store.currentUserId])
 
   return (
@@ -245,7 +291,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addRequest, updateRequest, takeRequest, reassignRequest,
       changeStatus, updateProgress, submitForApproval,
       approveRequest, rejectRequest, addComment,
-      addUser, updateUser,
+      addUser, updateUser, deleteUser,
+      addDept, updateDept, deleteDept,
       toasts, showToast, removeToast,
     }}>
       {children}
