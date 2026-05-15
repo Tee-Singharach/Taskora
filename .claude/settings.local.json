@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(curl -si \"https://api.anthropic.com/v1/design/h/QK8Gm1XD2lJdrDETgpXTTg\")",
+      "Bash(npx tsc *)",
+      "Bash(npx next *)"
+    ]
+  }
+}
