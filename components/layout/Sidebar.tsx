@@ -9,14 +9,14 @@ import type { Role } from '@/lib/types'
 
 type NavItem = { id: string; label: string; icon: string; href: string; badge?: number }
 
-function getNav(role: Role, counts: { myOpen: number; assigned: number; pendingApproval: number }): NavItem[] {
+function getNav(role: Role, counts: { myOpen: number; assigned: number; pendingApproval: number; openQueue: number }): NavItem[] {
   if (role === 'staff') return [
     { id: 'requests', label: 'คำร้องของฉัน',    icon: 'list',        href: '/requests',      badge: counts.myOpen },
     { id: 'new',      label: 'สร้างคำร้องใหม่',   icon: 'plus',        href: '/requests/new' },
   ]
   if (role === 'officer') return [
-    { id: 'requests', label: 'คำร้องทั้งหมด',      icon: 'inbox',       href: '/requests',      badge: counts.assigned },
-    { id: 'new',      label: 'สร้างคำร้องใหม่',   icon: 'plus',        href: '/requests/new' },
+    { id: 'inbox',    label: 'กล่องงาน',         icon: 'inbox',       href: '/officer/inbox',  badge: counts.openQueue },
+    { id: 'requests', label: 'คำร้องทั้งหมด',      icon: 'list',        href: '/requests',      badge: counts.assigned },
   ]
   if (role === 'manager') return [
     { id: 'dashboard', label: 'แดชบอร์ด',         icon: 'chart',       href: '/dashboard' },
@@ -44,6 +44,7 @@ export default function Sidebar() {
     myOpen: store.requests.filter(r => r.requesterId === currentUser.id && r.status === 'open').length,
     assigned: store.requests.filter(r => r.assigneeId === currentUser.id && r.status === 'in_progress').length,
     pendingApproval: store.requests.filter(r => r.status === 'waiting_approval').length,
+    openQueue: store.requests.filter((r: { status: string; assigneeId: string | null }) => r.status === 'open' && !r.assigneeId).length,
   }
   const items = getNav(role, counts)
   const dept = deptById(currentUser.dept)

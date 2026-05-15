@@ -263,7 +263,7 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
                 <span className="text-[13px] font-semibold text-indigo-600 w-9 text-right">{request.progress}%</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <button className="flex flex-col items-center gap-1.5 p-3 bg-white border border-gray-200 rounded-md hover:border-indigo-500 transition-colors disabled:opacity-50" disabled={request.status !== 'open'} onClick={() => takeRequest(id)}>
                   <Icon name="play" size={16} className="text-indigo-600"/>
                   <span className="text-[12px] font-semibold">รับงาน</span>
@@ -275,10 +275,6 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
                 <button className="flex flex-col items-center gap-1.5 p-3 bg-white border border-gray-200 rounded-md hover:border-indigo-500 transition-colors disabled:opacity-50" disabled={request.status === 'open' || request.status === 'completed' || request.status === 'rejected'} onClick={() => openModal('progress')}>
                   <Icon name="zap" size={16} className="text-indigo-600"/>
                   <span className="text-[12px] font-semibold">ความคืบหน้า</span>
-                </button>
-                <button className="flex flex-col items-center gap-1.5 p-3 bg-white border border-gray-200 rounded-md hover:border-indigo-500 transition-colors disabled:opacity-50" disabled={request.status !== 'in_progress'} onClick={() => submitForApproval(id)}>
-                  <Icon name="send" size={16} className="text-indigo-600"/>
-                  <span className="text-[12px] font-semibold">ส่งอนุมัติ</span>
                 </button>
               </div>
 

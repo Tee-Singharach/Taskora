@@ -1,4 +1,4 @@
-import type { RequestStatus, RequestPriority, Role } from './types'
+import type { RequestStatus, RequestPriority, Role, Request } from './types'
 
 /* ── Date helpers ────────────────────────────────── */
 const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
@@ -36,6 +36,8 @@ export function daysFromNow(iso: string | null | undefined): number {
 }
 
 /* ── Status ──────────────────────────────────────── */
+export const TERMINAL_STATUSES: RequestStatus[] = ['completed', 'rejected']
+
 export const STATUS_INFO: Record<RequestStatus, { label: string; color: string; order: number }> = {
   open:             { label: 'เปิดใหม่',          color: 'sky',     order: 0 },
   in_progress:      { label: 'กำลังดำเนินการ',     color: 'amber',   order: 1 },
@@ -48,12 +50,30 @@ export function statusBadgeClass(status: RequestStatus): string {
   return `badge badge-${STATUS_INFO[status]?.color ?? 'slate'}`
 }
 
+export function isOverdue(request: Request): boolean {
+  return new Date(request.dueAt).getTime() < Date.now() && !TERMINAL_STATUSES.includes(request.status)
+}
+
 /* ── Priority ────────────────────────────────────── */
+export const PRIORITY_ORDER: Record<RequestPriority, number> = {
+  urgent: 0,
+  high: 1,
+  normal: 2,
+  low: 3,
+}
+
 export const PRIORITY_INFO: Record<RequestPriority, { label: string; color: string }> = {
   low:    { label: 'ต่ำ',      color: 'slate' },
   normal: { label: 'ปกติ',     color: 'sky' },
   high:   { label: 'สูง',      color: 'amber' },
   urgent: { label: 'เร่งด่วน', color: 'rose' },
+}
+
+export function priorityBadgeClass(priority: RequestPriority): string {
+  const color = PRIORITY_INFO[priority].color
+  return color === 'rose'
+    ? 'bg-rose-50 text-rose-700 border-rose-200'
+    : 'bg-gray-50 text-gray-700 border-gray-200'
 }
 
 /* ── Role ────────────────────────────────────────── */

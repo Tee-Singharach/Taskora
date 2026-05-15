@@ -68,9 +68,11 @@ export default function RequestsPage() {
           </h1>
           <div className="text-[13px] text-gray-500 mt-1">{filtered.length} รายการ</div>
         </div>
-        <button className="flex items-center gap-1.5 px-4 py-2 rounded-md font-medium text-[13px] bg-indigo-600 text-white hover:bg-indigo-700 transition-colors" onClick={() => router.push('/requests/new')}>
-          + สร้างคำร้องใหม่
-        </button>
+        {currentUser?.role !== 'officer' && (
+          <button className="flex items-center gap-1.5 px-4 py-2 rounded-md font-medium text-[13px] bg-indigo-600 text-white hover:bg-indigo-700 transition-colors" onClick={() => router.push('/requests/new')}>
+            + สร้างคำร้องใหม่
+          </button>
+        )}
       </div>
 
       {/* Filter bar */}

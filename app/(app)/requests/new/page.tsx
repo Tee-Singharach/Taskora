@@ -12,6 +12,12 @@ export default function NewRequestPage() {
   const router = useRouter()
 
   const currentUser = store.users.find(u => u.id === store.currentUserId)
+
+  if (currentUser?.role === 'officer') {
+    router.replace('/officer/inbox')
+    return null
+  }
+
   const firstManager = store.users.find(u => u.role === 'manager')
 
   const [form, setForm] = useState({
