@@ -12,14 +12,14 @@ import Avatar from '@/components/ui/Avatar'
 import type { RequestStatus } from '@/lib/types'
 
 const WF_STEPS: { key: RequestStatus; label: string }[] = [
-  { key: 'open',             label: 'เปิดใหม่' },
+  { key: 'open',             label: 'คำร้องใหม่' },
   { key: 'in_progress',      label: 'กำลังดำเนินการ' },
   { key: 'waiting_approval', label: 'รออนุมัติ' },
   { key: 'completed',        label: 'เสร็จสิ้น' },
 ]
 const WF_ORDER = WF_STEPS.map(s => s.key)
 
-type ModalKind = null | 'approve' | 'reject' | 'assign' | 'progress' | 'status'
+type ModalKind = null | 'approve' | 'reject' | 'assign' | 'progress' | 'status' | 'take'
 
 export default function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -76,6 +76,10 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
   }
   function closeModal() { setModal(null) }
 
+  function confirmTake() {
+    takeRequest(id)
+    closeModal()
+  }
   function confirmApprove() {
     approveRequest(id, note)
     closeModal()
@@ -264,7 +268,7 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
               </div>
 
               <div className="grid grid-cols-3 gap-2">
-                <button className="flex flex-col items-center gap-1.5 p-3 bg-white border border-gray-200 rounded-md hover:border-indigo-500 transition-colors disabled:opacity-50" disabled={request.status !== 'open'} onClick={() => takeRequest(id)}>
+                <button className="flex flex-col items-center gap-1.5 p-3 bg-white border border-gray-200 rounded-md hover:border-indigo-500 transition-colors disabled:opacity-50" disabled={request.status !== 'open'} onClick={() => openModal('take')}>
                   <Icon name="play" size={16} className="text-indigo-600"/>
                   <span className="text-[12px] font-semibold">รับงาน</span>
                 </button>
@@ -303,6 +307,31 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
           )}
         </div>
       </div>
+
+      {modal === 'take' && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200] p-6 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) closeModal() }}>
+          <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-full max-w-[400px] flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-gray-200">
+              <div className="text-[16px] font-semibold">ยืนยันการรับงาน</div>
+              <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100" onClick={closeModal}><Icon name="x" size={16}/></button>
+            </div>
+            <div className="p-6">
+              <p className="text-[13px] text-gray-600 leading-relaxed">
+                คุณต้องการรับงาน <strong className="text-gray-900">"{request.title}"</strong> และเริ่มดำเนินการใช่หรือไม่?
+              </p>
+              <p className="text-[12px] text-amber-600 mt-3 bg-amber-50 border border-amber-100 rounded-md p-2.5">
+                เมื่อรับงานแล้ว สถานะจะเปลี่ยนเป็น "กำลังดำเนินการ" และงานจะถูกมอบหมายให้คุณ
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-200">
+              <button className="px-4 py-2 text-[14px] rounded-md border border-gray-200 hover:bg-gray-50" onClick={closeModal}>ยกเลิก</button>
+              <button className="flex items-center gap-1.5 px-4 py-2 text-[14px] rounded-md bg-indigo-600 text-white hover:bg-indigo-700" onClick={confirmTake}>
+                <Icon name="play" size={13}/> ยืนยันรับงาน
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {modal === 'approve' && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200] p-6 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) closeModal() }}>

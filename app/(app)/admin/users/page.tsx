@@ -5,7 +5,7 @@ import { useApp } from '@/components/providers/AppProvider'
 import { ROLE_INFO, ROLE_ORDER, avatarInitials, deptById } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
-import type { Role } from '@/lib/types'
+import type { Role, User } from '@/lib/types'
 
 interface UserForm {
   name: string
@@ -25,6 +25,7 @@ export default function AdminUsersPage() {
   const [editId, setEditId] = useState<string | null>(null)
   const [form, setForm] = useState<UserForm>(EMPTY_FORM)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState<User | null>(null)
 
   if (currentUser?.role !== 'admin') {
     return (
@@ -166,7 +167,7 @@ export default function AdminUsersPage() {
                         <Icon name="edit" size={13}/> แก้ไข
                       </button>
                       {u.id !== currentUser?.id && (
-                        <button className="flex items-center gap-1.5 text-gray-400 hover:text-red-600 transition-colors" onClick={() => { if (confirm(`ลบผู้ใช้ "${u.name}" ใช่หรือไม่?`)) deleteUser(u.id) }}>
+                        <button className="flex items-center gap-1.5 text-gray-400 hover:text-red-600 transition-colors" onClick={() => setConfirmDeleteUser(u)}>
                           <Icon name="trash" size={13}/> ลบ
                         </button>
                       )}
@@ -221,6 +222,42 @@ export default function AdminUsersPage() {
               <button className="px-4 py-2 text-[14px] rounded-md border border-gray-200 hover:bg-gray-50" onClick={() => setShowModal(false)}>ยกเลิก</button>
               <button className="px-4 py-2 text-[14px] rounded-md bg-indigo-600 text-white hover:bg-indigo-700" onClick={handleSave}>
                 {editId ? 'บันทึก' : 'เพิ่มผู้ใช้'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete user confirmation modal */}
+      {confirmDeleteUser && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200] p-6 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setConfirmDeleteUser(null) }}>
+          <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-full max-w-[400px] flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                  <Icon name="trash" size={16} className="text-red-600"/>
+                </div>
+                <div className="text-[16px] font-semibold">ยืนยันการลบผู้ใช้</div>
+              </div>
+              <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100" onClick={() => setConfirmDeleteUser(null)}>
+                <Icon name="x" size={16}/>
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-[13px] text-gray-600 leading-relaxed">
+                คุณต้องการลบบัญชีผู้ใช้ <strong className="text-gray-900">"{confirmDeleteUser.name}"</strong> ({confirmDeleteUser.email}) ออกจากระบบใช่หรือไม่?
+              </p>
+              <p className="text-[12px] text-red-600 mt-3 bg-red-50 border border-red-100 rounded-md p-2.5">
+                การลบไม่สามารถย้อนกลับได้ และข้อมูลผู้ใช้จะถูกลบออกอย่างถาวร
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-200">
+              <button className="px-4 py-2 text-[14px] rounded-md border border-gray-200 hover:bg-gray-50" onClick={() => setConfirmDeleteUser(null)}>ยกเลิก</button>
+              <button
+                className="flex items-center gap-1.5 px-4 py-2 text-[14px] rounded-md bg-red-600 text-white hover:bg-red-700"
+                onClick={() => { deleteUser(confirmDeleteUser.id); setConfirmDeleteUser(null) }}
+              >
+                <Icon name="trash" size={13}/> ยืนยันลบ
               </button>
             </div>
           </div>

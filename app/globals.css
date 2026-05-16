@@ -21,3 +21,35 @@ body { background: #fff; color: #111318; -webkit-font-smoothing: antialiased; fo
 
 button { font-family: inherit; cursor: pointer; }
 input, select, textarea { font-family: inherit; }
+
+/* ============================================================
+   Badge Styles
+   ============================================================ */
+
+.badge {
+  @apply inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium border;
+}
+
+.badge-sky {
+  @apply bg-sky-50 text-sky-700 border-sky-200;
+}
+
+.badge-amber {
+  @apply bg-amber-50 text-amber-700 border-amber-200;
+}
+
+.badge-violet {
+  @apply bg-violet-50 text-violet-700 border-violet-200;
+}
+
+.badge-emerald {
+  @apply bg-emerald-50 text-emerald-700 border-emerald-200;
+}
+
+.badge-rose {
+  @apply bg-rose-50 text-rose-700 border-rose-200;
+}
+
+.badge-slate {
+  @apply bg-slate-50 text-slate-700 border-slate-200;
+}

@@ -25,11 +25,9 @@ function getNav(role: Role, counts: { myOpen: number; assigned: number; pendingA
   ]
   // admin
   return [
-    { id: 'dashboard', label: 'แดชบอร์ด',         icon: 'chart',       href: '/dashboard' },
-    { id: 'users',     label: 'ผู้ใช้และบทบาท',     icon: 'users',       href: '/admin/users' },
-    { id: 'depts',     label: 'จัดการแผนก',         icon: 'building',    href: '/admin/departments' },
-    { id: 'audit',     label: 'Audit log',         icon: 'shield',      href: '/admin/audit' },
-    { id: 'requests',  label: 'คำร้องทั้งหมด',      icon: 'list',        href: '/requests' },
+    { id: 'users',  label: 'ผู้ใช้และบทบาท', icon: 'users',    href: '/admin/users' },
+    { id: 'depts',  label: 'จัดการแผนก',      icon: 'building', href: '/admin/departments' },
+    { id: 'audit',  label: 'Audit log',      icon: 'shield',   href: '/admin/audit' },
   ]
 }
 

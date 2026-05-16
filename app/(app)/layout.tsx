@@ -43,9 +43,15 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       return
     }
 
-    // Approval access (manager/admin only)
-    if (!['manager', 'admin'].includes(role) && isApprovalPath) {
-      router.replace('/requests')
+    // Approval access (manager only)
+    if (role !== 'manager' && isApprovalPath) {
+      router.replace('/dashboard')
+      return
+    }
+
+    // Admin is restricted to /admin/* paths only
+    if (role === 'admin' && !isAdminPath) {
+      router.replace('/admin/users')
       return
     }
   }, [role, pathname, router])

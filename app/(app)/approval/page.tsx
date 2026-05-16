@@ -14,7 +14,7 @@ export default function ApprovalPage() {
   const [confirmKind, setConfirmKind] = useState<'approve' | 'reject'>('approve')
   const [note, setNote] = useState('')
 
-  if (!['manager', 'admin'].includes(currentUser?.role ?? '')) {
+  if (currentUser?.role !== 'manager') {
     return (
       <div className="page">
         <div className="empty" style={{ paddingTop: 80 }}>
@@ -94,7 +94,7 @@ export default function ApprovalPage() {
                         <Icon name="calendar" size={12}/>
                         {fmtDate(r.dueAt)}
                       </div>
-                      <div>{deptById(r.department)?.name ?? r.department}</div>
+                      <div>{deptById(r.department, store.departments)?.name ?? r.department}</div>
                       <div className="text-gray-400">ยื่น {fmtRelative(r.createdAt)}</div>
                     </div>
 

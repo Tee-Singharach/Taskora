@@ -21,7 +21,7 @@ export default function LoginPage() {
     const user = store.users.find(u => u.id === userId)
     const home = user?.role === 'officer' ? '/officer/inbox'
                : user?.role === 'manager' ? '/dashboard'
-               : user?.role === 'admin'   ? '/dashboard'
+               : user?.role === 'admin'   ? '/admin/users'
                : '/requests'
     startTransition(() => {
       setCurrentUserId(userId)

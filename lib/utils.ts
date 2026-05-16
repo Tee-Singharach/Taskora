@@ -39,7 +39,7 @@ export function daysFromNow(iso: string | null | undefined): number {
 export const TERMINAL_STATUSES: RequestStatus[] = ['completed', 'rejected']
 
 export const STATUS_INFO: Record<RequestStatus, { label: string; color: string; order: number }> = {
-  open:             { label: 'เปิดใหม่',          color: 'sky',     order: 0 },
+  open:             { label: 'คำร้องใหม่',          color: 'sky',     order: 0 },
   in_progress:      { label: 'กำลังดำเนินการ',     color: 'amber',   order: 1 },
   waiting_approval: { label: 'รออนุมัติ',           color: 'violet',  order: 2 },
   completed:        { label: 'เสร็จสิ้น',           color: 'emerald', order: 3 },

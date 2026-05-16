@@ -16,6 +16,7 @@ export default function OfficerInboxPage() {
   const { store, currentUser, takeRequest } = useApp()
   const router = useRouter()
   const [tab, setTab] = useState<TabKind>('pending')
+  const [confirmTakeId, setConfirmTakeId] = useState<string | null>(null)
 
   if (!['officer', 'admin'].includes(currentUser?.role ?? '')) {
     return (
@@ -37,9 +38,7 @@ export default function OfficerInboxPage() {
 
   const now = Date.now()
 
-  function handleTakeRequest(id: string) {
-    takeRequest(id)
-  }
+  const confirmTakeRequest = store.requests.find(r => r.id === confirmTakeId)
 
   return (
     <div className="p-7 max-w-[1400px] mx-auto">
@@ -120,7 +119,7 @@ export default function OfficerInboxPage() {
 
                     <div className="flex-shrink-0">
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleTakeRequest(r.id); }}
+                        onClick={(e) => { e.stopPropagation(); setConfirmTakeId(r.id) }}
                         className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 text-[13px] font-medium transition-colors whitespace-nowrap"
                       >
                         <Icon name="play" size={14} />
@@ -183,7 +182,7 @@ export default function OfficerInboxPage() {
                     <div className="flex-shrink-0 flex flex-col items-end gap-2">
                       <div className="flex items-center gap-2">
                         <span className={statusBadgeClass(r.status)}>
-                          {r.status === 'open' ? 'เปิดใหม่' : r.status === 'in_progress' ? 'กำลังดำเนินการ' : r.status === 'waiting_approval' ? 'รออนุมัติ' : 'เสร็จสิ้น'}
+                          {r.status === 'open' ? 'คำร้องใหม่' : r.status === 'in_progress' ? 'กำลังดำเนินการ' : r.status === 'waiting_approval' ? 'รออนุมัติ' : 'เสร็จสิ้น'}
                         </span>
                         <Icon name="chevron-right" size={20} className="text-gray-300" />
                       </div>
@@ -194,6 +193,35 @@ export default function OfficerInboxPage() {
               )
             })
           )}
+        </div>
+      )}
+      {confirmTakeRequest && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200] p-6 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setConfirmTakeId(null) }}>
+          <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-full max-w-[400px] flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-gray-200">
+              <div className="text-[16px] font-semibold">ยืนยันการรับงาน</div>
+              <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100" onClick={() => setConfirmTakeId(null)}>
+                <Icon name="x" size={16}/>
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-[13px] text-gray-600 leading-relaxed">
+                คุณต้องการรับงาน <strong className="text-gray-900">"{confirmTakeRequest.title}"</strong> ใช่หรือไม่?
+              </p>
+              <p className="text-[12px] text-amber-600 mt-3 bg-amber-50 border border-amber-100 rounded-md p-2.5">
+                เมื่อรับงานแล้ว สถานะจะเปลี่ยนเป็น "กำลังดำเนินการ" และงานจะถูกมอบหมายให้คุณ
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-200">
+              <button className="px-4 py-2 text-[14px] rounded-md border border-gray-200 hover:bg-gray-50" onClick={() => setConfirmTakeId(null)}>ยกเลิก</button>
+              <button
+                className="flex items-center gap-1.5 px-4 py-2 text-[14px] rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+                onClick={() => { takeRequest(confirmTakeRequest.id); setConfirmTakeId(null) }}
+              >
+                <Icon name="play" size={13}/> ยืนยันรับงาน
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
