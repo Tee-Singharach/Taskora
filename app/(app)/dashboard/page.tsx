@@ -238,17 +238,8 @@ export default function DashboardPage() {
           <div className="flex-1 overflow-y-auto">
             <table className="w-full border-collapse text-[13px]">
               <tbody>
-                {recent.map((r, idx) => {
-                  const statusColor = {
-                    open: 'bg-sky-50',
-                    in_progress: 'bg-amber-50',
-                    waiting_approval: 'bg-violet-50',
-                    completed: 'bg-emerald-50',
-                    rejected: 'bg-red-50',
-                  }[r.status] || 'bg-gray-50'
-
-                  return (
-                    <tr key={r.id} className={`cursor-pointer transition-all hover:opacity-80 ${statusColor} ${idx !== recent.length - 1 ? 'border-b border-gray-100' : ''}`} onClick={() => router.push(`/requests/${r.id}`)}>
+                {recent.map((r, idx) => (
+                    <tr key={r.id} className={`cursor-pointer transition-all hover:opacity-80 ${idx !== recent.length - 1 ? 'border-b border-gray-100' : ''}`} onClick={() => router.push(`/requests/${r.id}`)}>
                       <td className="px-6 py-4">
                         <div className="font-medium max-w-[240px] truncate text-gray-900">{r.title}</div>
                         <div className="text-[11px] text-gray-400 mt-1 font-mono">{r.id}</div>
@@ -260,8 +251,7 @@ export default function DashboardPage() {
                         <span className={statusBadgeClass(r.status)}>{STATUS_INFO[r.status].label}</span>
                       </td>
                     </tr>
-                  )
-                })}
+                  ))}
               </tbody>
             </table>
           </div>
