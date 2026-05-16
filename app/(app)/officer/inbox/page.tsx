@@ -41,7 +41,7 @@ export default function OfficerInboxPage() {
   const confirmTakeRequest = store.requests.find(r => r.id === confirmTakeId)
 
   return (
-    <div className="p-7 max-w-[1400px] mx-auto">
+    <div className="p-4 lg:p-7 max-w-[1400px] mx-auto">
       <div className="mb-6">
         <h1 className="text-[22px] font-semibold tracking-tighter m-0">กล่องงาน</h1>
         <div className="text-[13px] text-gray-500 mt-1">สวัสดี {currentUser?.name} · บริหารงานของคุณ</div>
@@ -87,7 +87,7 @@ export default function OfficerInboxPage() {
               const requester = store.users.find(u => u.id === r.requesterId)
               const overdue = new Date(r.dueAt).getTime() < now
               return (
-                <div key={r.id} className="bg-white border border-gray-200 rounded-lg p-5 hover:border-indigo-300 transition-colors cursor-pointer group" onClick={() => router.push(`/requests/${r.id}`)}>
+                <div key={r.id} className="bg-white border border-gray-200 rounded-lg p-5 hover:border-indigo-300 transition-colors cursor-pointer group" onClick={() => router.push(`/requests/${r.id}?from=/officer/inbox`)}>
                   <div className="flex gap-5 items-start">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -148,7 +148,7 @@ export default function OfficerInboxPage() {
                 <div
                   key={r.id}
                   className="bg-white border border-gray-200 rounded-lg p-5 hover:border-indigo-300 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/requests/${r.id}`)}
+                  onClick={() => router.push(`/requests/${r.id}?from=/officer/inbox`)}
                 >
                   <div className="flex gap-5 items-start">
                     <div className="flex-1 min-w-0">

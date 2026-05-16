@@ -60,8 +60,8 @@ export default function RequestsPage() {
   const now = Date.now()
 
   return (
-    <div className="p-7 max-w-[1400px] mx-auto">
-      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+    <div className="p-4 lg:p-7 max-w-[1400px] mx-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-[22px] font-semibold tracking-tighter m-0">
             {currentUser?.role === 'staff' ? 'คำร้องของฉัน' : 'คำร้องทั้งหมด'}
@@ -76,8 +76,8 @@ export default function RequestsPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center gap-2.5 p-3 bg-white border border-gray-200 rounded-t-lg flex-wrap">
-        <div className="flex gap-2 flex-wrap flex-1">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-2.5 p-3 bg-white border border-gray-200 rounded-t-lg flex-wrap">
+        <div className="flex gap-2 flex-wrap flex-1 w-full md:w-auto">
           {STATUS_PILLS.map(p => (
             <button
               key={p.value}
@@ -94,7 +94,7 @@ export default function RequestsPage() {
           ))}
         </div>
 
-        <div className="relative w-[240px]">
+        <div className="relative w-full md:w-[240px]">
           <Icon name="search" size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"/>
           <input
             value={search}
@@ -124,7 +124,7 @@ export default function RequestsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-gray-200 rounded-b-lg border-t-0">
+      <div className="bg-white border border-gray-200 rounded-b-lg border-t-0 overflow-x-auto">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-gray-500 text-center gap-2">
             <Icon name="inbox" size={32} className="text-gray-300"/>
@@ -132,7 +132,7 @@ export default function RequestsPage() {
             <div className="text-[12px] text-gray-500">ลองปรับตัวกรองหรือค้นหาใหม่</div>
           </div>
         ) : (
-          <table className="w-full border-collapse text-[13px]">
+          <table className="w-full border-collapse text-[12px] lg:text-[13px]">
             <thead>
               <tr className="bg-slate-50 border-b border-gray-200 text-left">
                 <th className="px-4 py-3 text-[11px] font-semibold text-gray-500 tracking-wider uppercase w-[120px]">เลขที่</th>
@@ -149,7 +149,7 @@ export default function RequestsPage() {
                 const requester = store.users.find(u => u.id === r.requesterId)
                 const overdue = new Date(r.dueAt).getTime() < now && !['completed','rejected'].includes(r.status)
                 return (
-                  <tr key={r.id} className="cursor-pointer transition-colors hover:bg-gray-50 border-b border-gray-100 last:border-b-0" onClick={() => router.push(`/requests/${r.id}`)}>
+                  <tr key={r.id} className="cursor-pointer transition-colors hover:bg-gray-50 border-b border-gray-100 last:border-b-0" onClick={() => router.push(`/requests/${r.id}?from=/requests`)}>
                     <td className="px-4 py-3 font-mono text-[12px] text-gray-500">{r.id}</td>
                     <td className="px-4 py-3 text-gray-900">
                       <div className="font-medium truncate max-w-[340px]">{r.title}</div>

@@ -6,10 +6,13 @@ import { useApp } from '@/components/providers/AppProvider'
 import { DEPARTMENTS } from '@/lib/utils'
 import type { RequestPriority } from '@/lib/types'
 
-export default function EditRequestPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EditRequestPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ from?: string }> }) {
   const { id } = use(params)
+  const { from } = use(searchParams)
   const { store, updateRequest, showToast } = useApp()
   const router = useRouter()
+
+  const backPath = from ? `/requests/${id}?from=${encodeURIComponent(from)}` : `/requests/${id}`
 
   const request = store.requests.find(r => r.id === id)
 
@@ -55,13 +58,13 @@ export default function EditRequestPage({ params }: { params: Promise<{ id: stri
       department: form.department,
       dueAt: form.dueAt ? new Date(form.dueAt).toISOString() : request!.dueAt,
     })
-    router.push(`/requests/${id}`)
+    router.push(backPath)
   }
 
   return (
-    <div className="p-7 max-w-[680px] mx-auto">
+    <div className="p-4 lg:p-7 max-w-[680px] mx-auto">
       <div className="mb-6">
-        <button className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 text-[13px] mb-2" onClick={() => router.back()}>
+        <button className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 text-[13px] mb-2" onClick={() => router.push(backPath)}>
           ← ย้อนกลับ
         </button>
         <h1 className="text-[22px] font-semibold tracking-tighter m-0">แก้ไขคำร้อง</h1>
@@ -108,7 +111,7 @@ export default function EditRequestPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <div className="flex gap-2 justify-end mt-6">
-        <button className="px-4 py-2 text-[14px] rounded-md border border-gray-200 hover:bg-gray-50" onClick={() => router.back()}>ยกเลิก</button>
+        <button className="px-4 py-2 text-[14px] rounded-md border border-gray-200 hover:bg-gray-50" onClick={() => router.push(backPath)}>ยกเลิก</button>
         <button className="px-4 py-2 text-[14px] rounded-md bg-indigo-600 text-white hover:bg-indigo-700" onClick={handleSave}>บันทึกการแก้ไข</button>
       </div>
     </div>

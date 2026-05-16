@@ -38,15 +38,15 @@ export default function Topbar() {
   }, [])
 
   return (
-    <div className="h-[56px] border-b border-gray-200 flex items-center px-6 gap-4 flex-shrink-0 bg-white relative">
+    <div className="h-[56px] border-b border-gray-200 flex items-center px-4 lg:px-6 gap-2 lg:gap-4 flex-shrink-0 bg-white relative">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 min-w-0 flex-[0_1_auto]">
+      <div className="hidden sm:flex items-center gap-2 min-w-0 flex-[0_1_auto]">
         {crumbs.length > 0 && (
-          <div className="flex items-center gap-2 text-[13px] text-gray-500">
+          <div className="flex items-center gap-2 text-[12px] lg:text-[13px] text-gray-500">
             {crumbs.map((b, i) => (
               <span key={i} className="flex items-center gap-2">
                 {i > 0 && <Icon name="chevR" size={12} className="text-gray-400"/>}
-                <span className={`${i === crumbs.length - 1 ? 'text-gray-900 font-medium' : ''}`}>{b}</span>
+                <span className={`${i === crumbs.length - 1 ? 'text-gray-900 font-medium' : ''} truncate`}>{b}</span>
               </span>
             ))}
           </div>
@@ -55,8 +55,8 @@ export default function Topbar() {
 
       <div className="flex-1"/>
 
-      {/* Search */}
-      <div className="flex-[1] max-w-[360px] relative">
+      {/* Search - hide on mobile */}
+      <div className="hidden md:flex flex-[1] max-w-[360px] relative">
         <Icon name="search" size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/>
         <input
           value={search}
@@ -74,7 +74,7 @@ export default function Topbar() {
           {unread > 0 && <span className="absolute top-[7px] right-[8px] w-[7px] h-[7px] bg-red-500 rounded-full border-2 border-white"/>}
         </button>
         {showNotif && (
-          <div className="absolute top-[calc(100%+4px)] right-0 w-[360px] bg-white border border-gray-200 rounded-lg shadow-xl z-[150] overflow-hidden">
+          <div className="absolute top-[calc(100%+4px)] right-0 w-[320px] md:w-[360px] bg-white border border-gray-200 rounded-lg shadow-xl z-[150] overflow-hidden">
             <div className="px-4 py-3.5 border-b border-gray-200 flex items-center justify-between">
               <span className="text-[13px] font-semibold">การแจ้งเตือน</span>
               <button className="text-gray-500 hover:text-gray-900 text-[11px] bg-transparent border-none">อ่านทั้งหมด</button>

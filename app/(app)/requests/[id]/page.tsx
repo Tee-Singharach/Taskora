@@ -21,8 +21,9 @@ const WF_ORDER = WF_STEPS.map(s => s.key)
 
 type ModalKind = null | 'approve' | 'reject' | 'assign' | 'progress' | 'status' | 'take'
 
-export default function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function RequestDetailPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ from?: string }> }) {
   const { id } = use(params)
+  const { from } = use(searchParams)
   const {
     store, currentUser,
     takeRequest, reassignRequest, changeStatus,
@@ -30,6 +31,8 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
     approveRequest, rejectRequest, addComment,
   } = useApp()
   const router = useRouter()
+
+  const backPath = from || '/requests'
 
   const request = store.requests.find(r => r.id === id)
 
@@ -45,7 +48,7 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
       <div className="p-7 max-w-[1400px] mx-auto">
         <div className="text-center py-20">
           <div className="text-[16px] font-semibold">ไม่พบคำร้องนี้</div>
-          <button className="px-4 py-2 mt-4 text-[13px] border rounded-md hover:bg-gray-50" onClick={() => router.push('/requests')}>← กลับรายการ</button>
+          <button className="px-4 py-2 mt-4 text-[13px] border rounded-md hover:bg-gray-50" onClick={() => router.push(backPath)}>← กลับรายการ</button>
         </div>
       </div>
     )
@@ -109,10 +112,10 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
   }
 
   return (
-    <div className="p-7 max-w-[1400px] mx-auto">
-      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+    <div className="p-4 lg:p-7 max-w-[1400px] mx-auto">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div className="min-w-0">
-          <button className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 text-[13px] mb-2" onClick={() => router.back()}>
+          <button className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 text-[13px] mb-2" onClick={() => router.push(backPath)}>
             ← ย้อนกลับ
           </button>
           <div className="flex items-center gap-3 flex-wrap">
@@ -124,7 +127,7 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
           <h1 className="text-[20px] font-semibold mt-2 leading-tight tracking-tight">{request.title}</h1>
         </div>
         {canEdit && (
-          <button className="flex items-center gap-1.5 px-4 py-2 rounded-md border border-gray-200 text-[13px] font-medium text-gray-700 hover:bg-gray-50 flex-shrink-0" onClick={() => router.push(`/requests/${id}/edit`)}>
+          <button className="flex items-center gap-1.5 px-4 py-2 rounded-md border border-gray-200 text-[13px] font-medium text-gray-700 hover:bg-gray-50 flex-shrink-0" onClick={() => router.push(`/requests/${id}/edit${from ? `?from=${encodeURIComponent(from)}` : ''}`)}>
             <Icon name="edit" size={14}/> แก้ไข
           </button>
         )}
@@ -151,7 +154,7 @@ export default function RequestDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      <div className="grid grid-cols-[1fr_320px] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
         <div className="flex flex-col gap-5">
           <div className="bg-white border border-gray-200 rounded-lg p-5">
             <p className="text-[14px] text-gray-900 leading-relaxed mb-5">{request.description}</p>

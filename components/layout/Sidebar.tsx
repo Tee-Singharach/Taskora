@@ -31,10 +31,15 @@ function getNav(role: Role, counts: { myOpen: number; assigned: number; pendingA
   ]
 }
 
-export default function Sidebar() {
+export default function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const { store, currentUser } = useApp()
+
+  const handleNavClick = (href: string) => {
+    router.push(href)
+    onClose?.()
+  }
 
   if (!currentUser) return null
 
@@ -49,7 +54,7 @@ export default function Sidebar() {
   const dept = deptById(currentUser.dept)
 
   return (
-    <div className="w-[232px] flex-shrink-0 bg-slate-50 border-r border-gray-200 flex flex-col overflow-hidden">
+    <div className="w-[232px] h-screen bg-slate-50 border-r border-gray-200 flex flex-col overflow-hidden">
       <div className="flex items-center gap-2.5 p-4 pb-4 border-b border-gray-200 flex-shrink-0">
         <div className="w-[30px] h-[30px] bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
@@ -64,15 +69,15 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <div className="px-4 pt-4 pb-1.5 text-[10px] font-semibold text-gray-400 tracking-widest uppercase">เมนูหลัก</div>
-      <nav className="px-2 flex-1 overflow-y-auto">
+      <div className="px-4 pt-5 pb-3 text-[10px] font-semibold text-gray-400 tracking-widest uppercase">เมนูหลัก</div>
+      <nav className="px-2 pb-4 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         {items.map(item => {
           const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href) && item.href !== '/')
           return (
             <button
               key={item.id}
               className={`flex items-center gap-2.5 p-2 rounded-md text-[13px] transition-colors my-[1px] w-full text-left ${active ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}
-              onClick={() => router.push(item.href)}
+              onClick={() => handleNavClick(item.href)}
             >
               <Icon name={item.icon} size={16}/>
               <span>{item.label}</span>

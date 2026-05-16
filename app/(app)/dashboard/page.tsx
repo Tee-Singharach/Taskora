@@ -91,8 +91,8 @@ export default function DashboardPage() {
   }).filter(d => d.total > 0).sort((a, b) => b.total - a.total)
 
   return (
-    <div className="p-7 max-w-[1400px] mx-auto">
-      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+    <div className="p-4 lg:p-7 max-w-[1400px] mx-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-[22px] font-semibold tracking-tighter m-0">แดชบอร์ด</h1>
           <div className="text-[13px] text-gray-500 mt-1">สวัสดี {currentUser?.name} · ภาพรวมระบบคำร้องทั้งหมด</div>
@@ -105,7 +105,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map(s => (
           <div className="bg-white border border-gray-200 rounded-lg p-5" key={s.label}>
             <div className="text-[12px] text-gray-500 font-medium">{s.label}</div>
@@ -115,7 +115,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts grid */}
-      <div className="grid grid-cols-[2fr_1fr] gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 mb-6">
         {/* Bar Chart - Left (larger) */}
         <div className="bg-white border border-gray-200 rounded-lg">
           <div className="p-4 border-b border-gray-200 flex items-center justify-between">
@@ -201,7 +201,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Department workload + Recent requests grid */}
-      <div className="grid grid-cols-[1fr_1.2fr] gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-6 mb-6">
         {/* Department workload bars - Left */}
         <div className="bg-white border border-gray-200 rounded-lg flex flex-col">
           <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">

@@ -42,7 +42,7 @@ export default function AuditLogPage() {
 
   if (currentUser?.role !== 'admin') {
     return (
-      <div className="p-7 max-w-[1400px] mx-auto">
+      <div className="p-4 lg:p-7 max-w-[1400px] mx-auto">
         <div className="text-center py-20">
           <div className="text-[16px] font-semibold text-gray-500">เฉพาะผู้ดูแลระบบ</div>
         </div>
@@ -51,31 +51,57 @@ export default function AuditLogPage() {
   }
 
   return (
-    <div className="p-7 max-w-[1400px] mx-auto">
-      <div className="mb-6">
-        <h1 className="text-[22px] font-semibold tracking-tighter m-0">Audit Log</h1>
-        <div className="text-[13px] text-gray-500 mt-1">{filtered.length} รายการ</div>
+    <div className="p-4 lg:p-7 max-w-[1400px] mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center flex-shrink-0">
+            <Icon name="shield" size={20} className="text-white"/>
+          </div>
+          <h1 className="text-[24px] font-bold tracking-tighter m-0 text-gray-900">Audit Log</h1>
+        </div>
+        <p className="text-[13px] text-gray-500 mt-1">ประวัติการทำงานและการเข้าใช้ระบบ</p>
       </div>
 
-      {/* Filter bar */}
-      <div className="flex items-center gap-2.5 p-3 bg-white border border-gray-200 rounded-t-lg flex-wrap">
-        <div className="flex gap-2 flex-wrap flex-1">
-          <button className={`px-3 py-1.5 rounded-md text-[12px] border border-gray-200 transition-all ${catFilter === 'all' ? 'bg-indigo-50 border-indigo-300 text-indigo-600' : 'bg-white text-gray-900 hover:bg-gray-50'}`} onClick={() => setCatFilter('all')}>
-            ทั้งหมด <span className="text-[11px] opacity-70 ml-1">{catCounts.all}</span>
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative flex-1 md:max-w-xs">
+          <Icon name="search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="ค้นหา action, target..."
+            className="w-full bg-white border border-gray-200 rounded-lg py-2 pl-10 pr-4 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            className={`px-3 py-2 rounded-lg text-[12px] font-medium border transition-all ${
+              catFilter === 'all'
+                ? 'bg-indigo-50 border-indigo-300 text-indigo-600'
+                : 'bg-white border-gray-200 text-gray-600 hover:border-indigo-300'
+            }`}
+            onClick={() => setCatFilter('all')}
+          >
+            ทั้งหมด ({catCounts.all})
           </button>
           {(['workflow','user','security','system'] as AuditCategory[]).map(c => (
-            <button key={c} className={`px-3 py-1.5 rounded-md text-[12px] border border-gray-200 transition-all ${catFilter === c ? 'bg-indigo-50 border-indigo-300 text-indigo-600' : 'bg-white text-gray-900 hover:bg-gray-50'}`} onClick={() => setCatFilter(c)}>
-              {CAT_INFO[c].label} <span className="text-[11px] opacity-70 ml-1">{catCounts[c]}</span>
+            <button
+              key={c}
+              className={`px-3 py-2 rounded-lg text-[12px] font-medium border transition-all ${
+                catFilter === c
+                  ? 'bg-indigo-50 border-indigo-300 text-indigo-600'
+                  : 'bg-white border-gray-200 text-gray-600 hover:border-indigo-300'
+              }`}
+              onClick={() => setCatFilter(c)}
+            >
+              {CAT_INFO[c].label} ({catCounts[c]})
             </button>
           ))}
         </div>
-        <div className="relative w-[260px]">
-          <Icon name="search" size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"/>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหา action, target..." className="w-full bg-white border border-gray-200 rounded-md py-1.5 pl-8 pr-3 text-[13px] focus:border-indigo-500 outline-none"/>
-        </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-b-lg border-t-0">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
         {filtered.length === 0 ? (
           <div className="py-12 text-center text-gray-500 text-[14px]">ไม่พบรายการ</div>
         ) : (

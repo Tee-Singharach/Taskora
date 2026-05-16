@@ -49,7 +49,7 @@ export default function ApprovalPage() {
   }
 
   return (
-    <div className="p-7 max-w-[1400px] mx-auto">
+    <div className="p-4 lg:p-7 max-w-[1400px] mx-auto">
       <div className="mb-6">
         <h1 className="text-[22px] font-semibold tracking-tighter m-0">คิวรออนุมัติ</h1>
         <div className="text-[13px] text-gray-500 mt-1">
@@ -107,7 +107,7 @@ export default function ApprovalPage() {
                   </div>
 
                   <div className="flex flex-col gap-2 flex-shrink-0">
-                    <button className="flex items-center gap-1.5 px-4 py-2 rounded-md border border-gray-200 text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => router.push(`/requests/${r.id}`)}>
+                    <button className="flex items-center gap-1.5 px-4 py-2 rounded-md border border-gray-200 text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => router.push(`/requests/${r.id}?from=/approval`)}>
                       <Icon name="eye" size={13}/> ดูรายละเอียด
                     </button>
                     <button className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 text-[13px] font-medium transition-colors" onClick={() => openConfirm(r.id, 'approve')}>
