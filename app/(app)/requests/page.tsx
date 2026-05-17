@@ -76,8 +76,8 @@ export default function RequestsPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-2.5 p-3 bg-white border border-gray-200 rounded-t-lg flex-wrap">
-        <div className="flex gap-2 flex-wrap flex-1 w-full md:w-auto">
+      <div className="flex flex-col gap-3 p-3 bg-white border border-gray-200 rounded-t-lg md:gap-2.5 md:flex-wrap md:flex-row md:items-center">
+        <div className="flex gap-2 flex-wrap w-full">
           {STATUS_PILLS.map(p => (
             <button
               key={p.value}
@@ -104,19 +104,19 @@ export default function RequestsPage() {
           />
         </div>
 
-        <select className="bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={deptFilter} onChange={e => setDeptFilter(e.target.value)}>
+        <select className="w-full md:w-auto bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={deptFilter} onChange={e => setDeptFilter(e.target.value)}>
           <option value="all">ทุกฝ่าย</option>
           {store.departments.map(d => <option key={d.id} value={d.id}>{d.short}</option>)}
         </select>
 
-        <select className="bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value as RequestPriority | 'all')}>
+        <select className="w-full md:w-auto bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value as RequestPriority | 'all')}>
           <option value="all">ทุกความสำคัญ</option>
           {(['urgent','high','normal','low'] as const).map(p => (
             <option key={p} value={p}>{PRIORITY_INFO[p].label}</option>
           ))}
         </select>
 
-        <select className="bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)}>
+        <select className="w-full md:w-auto bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)}>
           <option value="createdAt">วันที่สร้าง</option>
           <option value="dueAt">วันกำหนด</option>
           <option value="priority">ความสำคัญ</option>
@@ -155,9 +155,9 @@ export default function RequestsPage() {
                       <div className="font-medium truncate max-w-[340px]">{r.title}</div>
                       <div className="text-[11px] text-gray-400 mt-0.5">{deptById(r.department, store.departments)?.name ?? r.department}</div>
                     </td>
-                    <td className="px-4 py-3"><span className={statusBadgeClass(r.status)}>{STATUS_INFO[r.status].label}</span></td>
+                    <td className="px-4 py-3"><span className={`${statusBadgeClass(r.status)}`}>{STATUS_INFO[r.status].label}</span></td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-[11px] border ${PRIORITY_INFO[r.priority].color === 'rose' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-gray-50 text-gray-700 border-gray-200'}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] border whitespace-nowrap ${PRIORITY_INFO[r.priority].color === 'rose' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-gray-50 text-gray-700 border-gray-200'}`}>
                         {PRIORITY_INFO[r.priority].label}
                       </span>
                     </td>

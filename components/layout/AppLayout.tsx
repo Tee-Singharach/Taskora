@@ -30,16 +30,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <div className="flex items-center lg:hidden px-4 h-[56px] border-b border-gray-200 bg-white flex-shrink-0 gap-2">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 text-gray-600"
-            title="เปิดเมนู"
-          >
-            <Icon name="menu" size={18} />
-          </button>
-        </div>
-        <Topbar />
+        <Topbar onMenuClick={() => setSidebarOpen(true)} />
         <div className="flex-1 overflow-auto">
           {children}
         </div>

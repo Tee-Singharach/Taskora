@@ -6,7 +6,8 @@
       "Bash(npx tsc *)",
       "Bash(npx next *)",
       "PowerShell(if \\(Test-Path \"E:\\\\testProjactClaude\\\\Taskora\\\\node_modules\"\\) { $size = \\(Get-ChildItem -Path \"E:\\\\testProjactClaude\\\\Taskora\\\\node_modules\" -Recurse -Force | Measure-Object -Sum -Property Length\\).Sum / 1MB; Write-Host \"node_modules: $\\([math]::Round\\($size, 2\\)\\) MB\" } else { Write-Host \"node_modules: ไม่มี\" })",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "PowerShell(Get-Process *)"
     ]
   }
 }

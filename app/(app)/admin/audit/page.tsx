@@ -109,7 +109,7 @@ export default function AuditLogPage() {
             {filtered.map(entry => {
               const actor = store.users.find(u => u.id === entry.actor)
               return (
-                <div key={entry.id} className="grid grid-cols-[180px_200px_1fr] gap-6 px-5 py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 items-start">
+                <div key={entry.id} className="grid grid-cols-1 md:grid-cols-[180px_200px_1fr] gap-4 md:gap-6 px-4 md:px-5 py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 items-start">
                   {/* Time */}
                   <div className="flex flex-col gap-0.5">
                     <div className="text-[13px] font-medium text-gray-900">{fmtDateTime(entry.time)}</div>

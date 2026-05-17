@@ -47,7 +47,16 @@ export const STATUS_INFO: Record<RequestStatus, { label: string; color: string; 
 }
 
 export function statusBadgeClass(status: RequestStatus): string {
-  return `badge badge-${STATUS_INFO[status]?.color ?? 'slate'}`
+  const color = STATUS_INFO[status]?.color ?? 'slate'
+  const colorMap: Record<string, string> = {
+    sky: 'bg-sky-50 text-sky-700 border-sky-200',
+    amber: 'bg-amber-50 text-amber-700 border-amber-200',
+    violet: 'bg-violet-50 text-violet-700 border-violet-200',
+    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    rose: 'bg-rose-50 text-rose-700 border-rose-200',
+    slate: 'bg-slate-50 text-slate-700 border-slate-200',
+  }
+  return `px-2 py-0.5 rounded-full text-[11px] font-medium border inline-flex items-center gap-1 whitespace-nowrap ${colorMap[color] || colorMap.slate}`
 }
 
 export function isOverdue(request: Request): boolean {

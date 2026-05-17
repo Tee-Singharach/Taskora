@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
 import { STATUS_INFO, PRIORITY_INFO, fmtDate, fmtRelative, statusBadgeClass } from '@/lib/utils'
@@ -10,6 +11,7 @@ export default function DashboardPage() {
   const { store, currentUser } = useApp()
   const router = useRouter()
   const { requests, users } = store
+  const [chartPeriod, setChartPeriod] = useState<'7d' | '1m'>('7d')
 
   const now = Date.now()
 
@@ -38,8 +40,6 @@ export default function DashboardPage() {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 5)
 
-  // Last 7 days: created vs completed
-  // TODO: Replace with actual calculation once data loads correctly
   const last7Days: Array<{ date: string; created: number; completed: number }> = [
     { date: 'พ.ค. 10', created: 2, completed: 1 },
     { date: 'พ.ค. 11', created: 3, completed: 2 },
@@ -50,6 +50,29 @@ export default function DashboardPage() {
     { date: 'พ.ค. 16', created: 2, completed: 2 },
   ]
 
+  const last30Days: Array<{ date: string; created: number; completed: number }> = [
+    { date: 'พ.ค. 17', created: 2, completed: 1 },
+    { date: 'พ.ค. 18', created: 3, completed: 2 },
+    { date: 'พ.ค. 19', created: 2, completed: 2 },
+    { date: 'พ.ค. 20', created: 1, completed: 1 },
+    { date: 'พ.ค. 21', created: 2, completed: 2 },
+    { date: 'พ.ค. 22', created: 3, completed: 1 },
+    { date: 'พ.ค. 23', created: 2, completed: 2 },
+    { date: 'พ.ค. 24', created: 2, completed: 1 },
+    { date: 'พ.ค. 25', created: 3, completed: 2 },
+    { date: 'พ.ค. 26', created: 2, completed: 2 },
+    { date: 'พ.ค. 27', created: 1, completed: 1 },
+    { date: 'พ.ค. 28', created: 2, completed: 2 },
+    { date: 'พ.ค. 29', created: 3, completed: 1 },
+    { date: 'พ.ค. 30', created: 2, completed: 2 },
+    { date: 'มิ.ย. 1', created: 2, completed: 1 },
+    { date: 'มิ.ย. 2', created: 3, completed: 2 },
+  ]
+
+  const chartData = chartPeriod === '7d' ? last7Days : last30Days
+  const totalCreated = chartData.reduce((sum, d) => sum + d.created, 0)
+  const totalCompleted = chartData.reduce((sum, d) => sum + d.completed, 0)
+
   // Prepare data for charts
   const statusChartData: Array<{ name: string; value: number; fill: string }> = [
     { name: STATUS_INFO.open.label, value: openCount, fill: '#0EA5E9' },
@@ -58,9 +81,6 @@ export default function DashboardPage() {
     { name: STATUS_INFO.completed.label, value: completedCount, fill: '#10B981' },
     { name: STATUS_INFO.rejected.label, value: requests.filter(r => r.status === 'rejected').length, fill: '#EF4444' },
   ].filter(d => d.value > 0)
-
-  const totalCreated = last7Days.reduce((sum, d) => sum + d.created, 0)
-  const totalCompleted = last7Days.reduce((sum, d) => sum + d.completed, 0)
 
   // Department workload
   // Color mapping for departments
@@ -119,16 +139,20 @@ export default function DashboardPage() {
         {/* Bar Chart - Left (larger) */}
         <div className="bg-white border border-gray-200 rounded-lg">
           <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <div className="text-[15px] font-semibold text-gray-900 tracking-tighter">คำร้องสร้าง / เสร็จสิ้น 7 วันล่าสุด</div>
+            <div className="text-[15px] font-semibold text-gray-900 tracking-tighter">คำร้องสร้าง / เสร็จสิ้น</div>
+            <div className="flex gap-2">
+              <button className={`px-3 py-1 rounded-md text-[12px] font-medium border transition-all ${chartPeriod === '7d' ? 'bg-indigo-50 border-indigo-300 text-indigo-600' : 'bg-white border-gray-200 text-gray-600'}`} onClick={() => setChartPeriod('7d')}>7 วัน</button>
+              <button className={`px-3 py-1 rounded-md text-[12px] font-medium border transition-all ${chartPeriod === '1m' ? 'bg-indigo-50 border-indigo-300 text-indigo-600' : 'bg-white border-gray-200 text-gray-600'}`} onClick={() => setChartPeriod('1m')}>1 เดือน</button>
+            </div>
           </div>
-          <div className="p-5 flex flex-row gap-6 items-start">
-            {last7Days.length === 0 ? (
+          <div className="p-5 flex flex-col lg:flex-row gap-6 lg:items-start">
+            {chartData.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-6 text-gray-500 text-center w-full"><div className="text-[12px]">ไม่มีข้อมูล</div></div>
             ) : (
               <>
-                <div className="flex-1">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={last7Days}>
+                <div className="w-full h-[300px] min-w-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} />
@@ -138,7 +162,7 @@ export default function DashboardPage() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex flex-col gap-3 flex-shrink-0">
+                <div className="flex flex-row flex-wrap gap-4">
                   <div className="flex items-center gap-3 text-[12px]">
                     <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#3B82F6' }} />
                     <span className="text-gray-700">คำร้องใหม่</span>
@@ -160,13 +184,13 @@ export default function DashboardPage() {
           <div className="p-4 border-b border-gray-200">
             <div className="text-[15px] font-semibold text-gray-900 tracking-tighter">สัดส่วนตามสถานะ</div>
           </div>
-          <div className="p-5 flex flex-row gap-6 items-center">
+          <div className="p-5 flex flex-col lg:flex-row gap-6 lg:items-center min-w-0">
             {statusChartData.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-6 text-gray-500 text-center w-full"><div className="text-[12px]">ไม่มีคำร้อง</div></div>
             ) : (
               <>
-                <div className="flex-1">
-                  <ResponsiveContainer width="100%" height={200}>
+                <div className="w-full h-[200px] min-w-0">
+                  <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={statusChartData as any}
@@ -185,7 +209,7 @@ export default function DashboardPage() {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex flex-col gap-2 flex-shrink-0">
+                <div className="flex flex-row flex-wrap gap-3 items-start">
                   {statusChartData.map((entry) => (
                     <div key={entry.name} className="flex items-center gap-2 text-[11px] whitespace-nowrap">
                       <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: entry.fill }} />

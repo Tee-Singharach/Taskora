@@ -14,7 +14,7 @@ const BREADCRUMBS: Record<string, string[]> = {
   '/admin/audit':     ['ผู้ดูแลระบบ', 'Audit Log'],
 }
 
-export default function Topbar() {
+export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { store } = useApp()
   const [search, setSearch] = useState('')
   const [showNotif, setShowNotif] = useState(false)
@@ -39,6 +39,15 @@ export default function Topbar() {
 
   return (
     <div className="h-[56px] border-b border-gray-200 flex items-center px-4 lg:px-6 gap-2 lg:gap-4 flex-shrink-0 bg-white relative">
+      {/* Mobile menu button */}
+      <button
+        onClick={onMenuClick}
+        className="lg:hidden w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 text-gray-600 flex-shrink-0"
+        title="เปิดเมนู"
+      >
+        <Icon name="menu" size={18} />
+      </button>
+
       {/* Breadcrumb */}
       <div className="hidden sm:flex items-center gap-2 min-w-0 flex-[0_1_auto]">
         {crumbs.length > 0 && (
@@ -53,7 +62,10 @@ export default function Topbar() {
         )}
       </div>
 
-      <div className="flex-1"/>
+      <div className="hidden sm:flex flex-1"/>
+
+      {/* Mobile spacer - push bell and menu to the right */}
+      <div className="lg:hidden flex-1"/>
 
       {/* Search - hide on mobile */}
       <div className="hidden md:flex flex-[1] max-w-[360px] relative">

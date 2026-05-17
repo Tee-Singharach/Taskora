@@ -193,7 +193,7 @@ export default function AdminDepartmentsPage() {
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-[500px] flex flex-col border border-gray-100">
             <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-white">
               <div>
-                <h3 className="text-[18px] font-bold text-gray-900">{editId ? '✏️ แก้ไขแผนก' : '➕ เพิ่มแผนกใหม่'}</h3>
+                <h3 className="text-[18px] font-bold text-gray-900">{editId ? '✏️ แก้ไขแผนก' : 'เพิ่มแผนกใหม่'}</h3>
                 <p className="text-[12px] text-gray-500 mt-1">{editId ? 'อัปเดตข้อมูลแผนก' : 'สร้างแผนกใหม่'}</p>
               </div>
               <button className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-200 transition-colors" onClick={() => setShowModal(false)}>
