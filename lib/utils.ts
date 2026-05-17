@@ -1,4 +1,4 @@
-import type { RequestStatus, RequestPriority, Role, Request, Department } from './types'
+import type { User, RequestStatus, RequestPriority, Role, Request, Department } from './types'
 
 /* ── Date helpers ────────────────────────────────── */
 const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
@@ -107,6 +107,15 @@ export const DEPARTMENTS = [
 
 export function deptById(id: string, departments: Department[] = DEPARTMENTS) {
   return departments.find(d => d.id === id)
+}
+
+/* ── Full name ───────────────────────────────────── */
+export function fullName(user: Pick<User, 'firstName' | 'lastName'>): string {
+  return `${user.firstName} ${user.lastName}`
+}
+
+export function formalName(user: Pick<User, 'title' | 'firstName' | 'lastName'>): string {
+  return `${user.title}${user.firstName} ${user.lastName}`
 }
 
 /* ── Avatar color ────────────────────────────────── */

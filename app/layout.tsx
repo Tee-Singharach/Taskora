@@ -11,7 +11,7 @@ const sarabun = Sarabun({
 })
 
 export const metadata: Metadata = {
-  title: 'MojiFlow — ระบบบริหารจัดการคำร้อง',
+  title: 'Taskora — ระบบบริหารจัดการคำร้อง',
   description: 'ระบบบริหารจัดการงานและคำร้องภายในองค์กร',
 }
 

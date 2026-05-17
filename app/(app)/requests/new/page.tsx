@@ -155,17 +155,25 @@ export default function NewRequestPage() {
           {/* Attachment */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[12px] font-medium text-gray-500">เอกสารแนบ</label>
-            <div className="border-2 border-dashed border-gray-200 rounded-md p-4 bg-gray-50">
-              <input type="file" multiple onChange={handleFileChange} className="hidden" id="file-upload" />
-              <label htmlFor="file-upload" className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white border border-gray-200 text-[13px] font-medium cursor-pointer hover:bg-gray-50 w-fit" style={{ marginBottom: 12 }}>
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 bg-gray-50 flex flex-col items-center gap-3">
+              <input type="file" multiple onChange={handleFileChange} className="hidden" id="file-upload" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"/>
+              <Icon name="paperclip" size={28} className="text-gray-300"/>
+              <label htmlFor="file-upload" className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white border border-gray-200 text-[13px] font-medium cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 transition-colors">
                 <Icon name="paperclip" size={14}/> เลือกไฟล์...
               </label>
+              <p className="text-[11px] text-gray-400 text-center">
+                PDF, Word, Excel, รูปภาพ · ขนาดสูงสุด <span className="font-medium text-gray-500">10 MB</span> ต่อไฟล์
+              </p>
               {form.attachments.length > 0 && (
-                <div className="flex flex-col gap-2">
+                <div className="w-full flex flex-col gap-2 mt-1">
                   {form.attachments.map((file, i) => (
-                    <div key={i} className="flex items-center justify-between text-[13px] bg-white p-2 border border-gray-200 rounded">
-                      <span>{file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
-                      <button type="button" onClick={() => removeFile(i)} className="text-red-500 hover:text-red-700">ลบ</button>
+                    <div key={i} className="flex items-center justify-between text-[13px] bg-white p-2.5 border border-gray-200 rounded-md">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Icon name="paperclip" size={13} className="text-gray-400 flex-shrink-0"/>
+                        <span className="truncate text-gray-700">{file.name}</span>
+                        <span className="text-[11px] text-gray-400 flex-shrink-0">({(file.size / 1024).toFixed(1)} KB)</span>
+                      </div>
+                      <button type="button" onClick={() => removeFile(i)} className="text-gray-400 hover:text-red-500 transition-colors ml-2 flex-shrink-0">ลบ</button>
                     </div>
                   ))}
                 </div>

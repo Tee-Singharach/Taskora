@@ -11,9 +11,13 @@ export type RequestPriority = 'low' | 'normal' | 'high' | 'urgent'
 export type AuditCategory = 'workflow' | 'user' | 'security' | 'system'
 export type EventKind = 'system' | 'comment' | 'approve' | 'reject'
 
+export type UserTitle = 'นาย' | 'นาง' | 'นางสาว' | 'ดร.' | 'รศ.' | 'ศ.'
+
 export interface User {
   id: string
-  name: string
+  title: UserTitle
+  firstName: string
+  lastName: string
   email: string
   role: Role
   dept: string

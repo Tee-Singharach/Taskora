@@ -8,7 +8,7 @@ import type { Role } from '@/lib/types'
 
 export default function LoginPage() {
   const { store, setCurrentUserId } = useApp()
-  const [email, setEmail] = useState('somchai.r@mojiflow.co')
+  const [email, setEmail] = useState('somchai.r@taskora.co')
   const [password, setPassword] = useState('')
   const [err, setErr] = useState('')
   const [showReset, setShowReset] = useState(false)
@@ -56,7 +56,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <div className="text-[18px] font-semibold tracking-tighter">
-            MojiFlow
+            Taskora
             <span className="block text-[11px] font-normal leading-[1] text-gray-500">ระบบบริหารคำร้อง</span>
           </div>
         </div>
@@ -69,7 +69,7 @@ export default function LoginPage() {
             <form className="flex flex-col gap-3.5" onSubmit={submit}>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[12px] font-medium text-gray-500">อีเมล</label>
-                <input className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] text-gray-900 outline-none transition-all focus:border-indigo-600 focus:shadow-[0_0_0_3px_rgba(79,108,247,0.2)] placeholder:text-gray-400" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@mojiflow.co"/>
+                <input className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] text-gray-900 outline-none transition-all focus:border-indigo-600 focus:shadow-[0_0_0_3px_rgba(79,108,247,0.2)] placeholder:text-gray-400" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@taskora.co"/>
               </div>
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
@@ -105,7 +105,7 @@ export default function LoginPage() {
               <form className="flex flex-col gap-3.5" onSubmit={e => { e.preventDefault(); setResetSent(true) }}>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[12px] font-medium text-gray-500">อีเมล</label>
-                  <input className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] text-gray-900 outline-none transition-all focus:border-indigo-600 focus:shadow-[0_0_0_3px_rgba(79,108,247,0.2)] placeholder:text-gray-400" type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="name@mojiflow.co" required/>
+                  <input className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] text-gray-900 outline-none transition-all focus:border-indigo-600 focus:shadow-[0_0_0_3px_rgba(79,108,247,0.2)] placeholder:text-gray-400" type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="name@taskora.co" required/>
                 </div>
                 <button type="submit" className="w-full flex items-center justify-center gap-1.5 rounded-md font-medium text-[14px] p-2.5 bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">ส่งลิงก์รีเซ็ต</button>
                 <button type="button" className="w-full flex items-center justify-center gap-1.5 rounded-md font-medium text-[14px] p-2.5 bg-transparent text-gray-500 hover:bg-slate-50 transition-colors" onClick={() => setShowReset(false)}>กลับเข้าสู่ระบบ</button>

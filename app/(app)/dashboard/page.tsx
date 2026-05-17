@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
-import { STATUS_INFO, PRIORITY_INFO, fmtDate, fmtRelative, statusBadgeClass } from '@/lib/utils'
+import { STATUS_INFO, PRIORITY_INFO, fmtDate, fmtRelative, statusBadgeClass, fullName } from '@/lib/utils'
 import Avatar from '@/components/ui/Avatar'
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
@@ -115,7 +115,7 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-[22px] font-semibold tracking-tighter m-0">แดชบอร์ด</h1>
-          <div className="text-[13px] text-gray-500 mt-1">สวัสดี {currentUser?.name} · ภาพรวมระบบคำร้องทั้งหมด</div>
+          <div className="text-[13px] text-gray-500 mt-1">สวัสดี {currentUser ? fullName(currentUser) : ''} · ภาพรวมระบบคำร้องทั้งหมด</div>
         </div>
         {currentUser?.role === 'staff' && (
           <button className="flex items-center gap-1.5 px-4 py-2 rounded-md font-medium text-[13px] bg-indigo-600 text-white hover:bg-indigo-700 transition-colors" onClick={() => router.push('/requests/new')}>

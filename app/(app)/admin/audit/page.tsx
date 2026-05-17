@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useApp } from '@/components/providers/AppProvider'
-import { fmtDateTime, fmtRelative } from '@/lib/utils'
+import { fmtDateTime, fmtRelative, fullName, formalName } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 import type { AuditCategory } from '@/lib/types'
@@ -118,9 +118,9 @@ export default function AuditLogPage() {
 
                   {/* Actor */}
                   <div className="flex items-center gap-3">
-                    <Avatar name={actor?.name ?? entry.actor} size="sm"/>
+                    <Avatar name={actor ? fullName(actor) : entry.actor} size="sm"/>
                     <div className="min-w-0 truncate">
-                      <div className="text-[13px] font-medium text-gray-900 truncate">{actor?.name ?? entry.actor}</div>
+                      <div className="text-[13px] font-medium text-gray-900 truncate">{actor ? formalName(actor) : entry.actor}</div>
                       <div className="text-[11px] text-gray-400 truncate">{actor?.email ?? entry.actor}</div>
                     </div>
                   </div>

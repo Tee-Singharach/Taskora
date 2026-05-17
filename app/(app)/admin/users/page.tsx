@@ -2,13 +2,17 @@
 
 import { useState } from 'react'
 import { useApp } from '@/components/providers/AppProvider'
-import { ROLE_INFO, ROLE_ORDER, avatarInitials, deptById } from '@/lib/utils'
+import { ROLE_INFO, ROLE_ORDER, avatarInitials, deptById, fullName, formalName } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
-import type { Role, User } from '@/lib/types'
+import type { Role, User, UserTitle } from '@/lib/types'
+
+const TITLES: UserTitle[] = ['นาย', 'นาง', 'นางสาว', 'ดร.', 'รศ.', 'ศ.']
 
 interface UserForm {
-  name: string
+  title: UserTitle
+  firstName: string
+  lastName: string
   email: string
   role: Role
   dept: string
@@ -16,7 +20,7 @@ interface UserForm {
   passwordConfirm: string
 }
 
-const EMPTY_FORM: UserForm = { name: '', email: '', role: 'staff', dept: '', password: '', passwordConfirm: '' }
+const EMPTY_FORM: UserForm = { title: 'นาย', firstName: '', lastName: '', email: '', role: 'staff', dept: '', password: '', passwordConfirm: '' }
 
 export default function AdminUsersPage() {
   const { store, currentUser, addUser, updateUser, deleteUser, showToast } = useApp()
@@ -43,7 +47,7 @@ export default function AdminUsersPage() {
 
   const filtered = store.users.filter(u => {
     const matchSearch = !search ||
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      fullName(u).toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase())
     const matchRole = roleFilter === 'all' || u.role === roleFilter
     return matchSearch && matchRole
@@ -59,7 +63,7 @@ export default function AdminUsersPage() {
   function openEdit(id: string) {
     const u = store.users.find(u => u.id === id)
     if (!u) return
-    setForm({ name: u.name, email: u.email, role: u.role, dept: u.dept, password: '', passwordConfirm: '' })
+    setForm({ title: u.title, firstName: u.firstName, lastName: u.lastName, email: u.email, role: u.role, dept: u.dept, password: '', passwordConfirm: '' })
     setErrors({})
     setEditId(id)
     setShowModal(true)
@@ -67,7 +71,8 @@ export default function AdminUsersPage() {
 
   function validate() {
     const e: Record<string, string> = {}
-    if (!form.name.trim())  e.name  = 'กรุณากรอกชื่อ'
+    if (!form.firstName.trim()) e.firstName = 'กรุณากรอกชื่อ'
+    if (!form.lastName.trim())  e.lastName  = 'กรุณากรอกนามสกุล'
     if (!form.email.trim()) e.email = 'กรุณากรอกอีเมล'
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'รูปแบบอีเมลไม่ถูกต้อง'
     if (!editId && !form.password.trim()) e.password = 'กรุณากรอกรหัสผ่าน'
@@ -81,9 +86,9 @@ export default function AdminUsersPage() {
   function handleSave() {
     if (!validate()) return
     if (editId) {
-      updateUser(editId, { name: form.name, email: form.email, role: form.role, dept: form.dept })
+      updateUser(editId, { title: form.title, firstName: form.firstName, lastName: form.lastName, email: form.email, role: form.role, dept: form.dept })
     } else {
-      addUser({ name: form.name, email: form.email, role: form.role, dept: form.dept })
+      addUser({ title: form.title, firstName: form.firstName, lastName: form.lastName, email: form.email, role: form.role, dept: form.dept })
     }
     setShowModal(false)
   }
@@ -207,9 +212,9 @@ export default function AdminUsersPage() {
                   <tr key={u.id} className={`border-b border-gray-100 hover:bg-indigo-50/50 transition-colors ${idx === filtered.length - 1 ? 'border-b-0' : ''}`}>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
-                        <Avatar name={u.name}/>
+                        <Avatar name={fullName(u)}/>
                         <div className="min-w-0">
-                          <div className="font-medium text-gray-900 truncate">{u.name}</div>
+                          <div className="font-medium text-gray-900 truncate">{formalName(u)}</div>
                           <div className="text-[11px] text-gray-400 font-mono truncate">{u.id}</div>
                         </div>
                       </div>
@@ -263,10 +268,25 @@ export default function AdminUsersPage() {
             </div>
             <div className="p-6 flex flex-col gap-4 overflow-y-auto">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-medium text-gray-500">ชื่อ-นามสกุล <span className="text-red-500">*</span></label>
-                <input className={`w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500 ${errors.name ? 'border-red-500' : ''}`} type="text" value={form.name}
-                  onChange={e => setForm(p => ({ ...p, name: e.target.value }))}/>
-                {errors.name && <div className="text-[11px] text-red-500">{errors.name}</div>}
+                <label className="text-[12px] font-medium text-gray-500">คำนำหน้า <span className="text-red-500">*</span></label>
+                <select className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500" value={form.title}
+                  onChange={e => setForm(p => ({ ...p, title: e.target.value as UserTitle }))}>
+                  {TITLES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-medium text-gray-500">ชื่อ <span className="text-red-500">*</span></label>
+                  <input className={`w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500 ${errors.firstName ? 'border-red-500' : ''}`} type="text" value={form.firstName}
+                    onChange={e => setForm(p => ({ ...p, firstName: e.target.value }))}/>
+                  {errors.firstName && <div className="text-[11px] text-red-500">{errors.firstName}</div>}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-medium text-gray-500">นามสกุล <span className="text-red-500">*</span></label>
+                  <input className={`w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500 ${errors.lastName ? 'border-red-500' : ''}`} type="text" value={form.lastName}
+                    onChange={e => setForm(p => ({ ...p, lastName: e.target.value }))}/>
+                  {errors.lastName && <div className="text-[11px] text-red-500">{errors.lastName}</div>}
+                </div>
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[12px] font-medium text-gray-500">อีเมล <span className="text-red-500">*</span></label>
@@ -334,7 +354,7 @@ export default function AdminUsersPage() {
             </div>
             <div className="p-6">
               <p className="text-[13px] text-gray-600 leading-relaxed">
-                คุณต้องการลบบัญชีผู้ใช้ <strong className="text-gray-900">"{confirmDeleteUser.name}"</strong> ({confirmDeleteUser.email}) ออกจากระบบใช่หรือไม่?
+                คุณต้องการลบบัญชีผู้ใช้ <strong className="text-gray-900">"{formalName(confirmDeleteUser)}"</strong> ({confirmDeleteUser.email}) ออกจากระบบใช่หรือไม่?
               </p>
               <p className="text-[12px] text-red-600 mt-3 bg-red-50 border border-red-100 rounded-md p-2.5">
                 การลบไม่สามารถย้อนกลับได้ และข้อมูลผู้ใช้จะถูกลบออกอย่างถาวร

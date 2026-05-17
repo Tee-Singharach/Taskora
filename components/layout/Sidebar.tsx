@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
-import { ROLE_INFO, deptById } from '@/lib/utils'
+import { ROLE_INFO, deptById, fullName } from '@/lib/utils'
 import type { Role } from '@/lib/types'
 
 type NavItem = { id: string; label: string; icon: string; href: string; badge?: number }
@@ -64,7 +64,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
           </svg>
         </div>
         <div className="text-[15px] font-semibold text-gray-900 tracking-tighter">
-          MojiFlow
+          Taskora
           <span className="font-normal text-gray-500 text-[11px] block leading-tight mt-[1px]">ระบบจัดการคำร้อง</span>
         </div>
       </div>
@@ -89,7 +89,10 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
 
       <div className="px-4 pt-4 pb-1.5 text-[10px] font-semibold text-gray-400 tracking-widest uppercase">ทั่วไป</div>
       <div className="p-2">
-        <button className="flex items-center gap-2.5 p-2 rounded-md text-[13px] text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors w-full text-left">
+        <button
+          onClick={() => handleNavClick('/settings')}
+          className={`flex items-center gap-2.5 p-2 rounded-md text-[13px] transition-colors w-full text-left ${pathname === '/settings' ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}
+        >
           <Icon name="settings" size={16}/>
           <span>การตั้งค่า</span>
         </button>
@@ -97,10 +100,10 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
 
       <div className="p-3 border-t border-gray-200 flex-shrink-0">
         <div className="flex items-center gap-2.5 p-1.5 rounded-md">
-          <Avatar name={currentUser.name} size="sm"/>
+          <Avatar name={fullName(currentUser)} size="sm"/>
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-medium text-gray-900 truncate">
-              {currentUser.name}
+              {fullName(currentUser)}
             </div>
             <div className="text-[11px] text-gray-500">{ROLE_INFO[role].th} · {dept?.short ?? currentUser.dept}</div>
           </div>

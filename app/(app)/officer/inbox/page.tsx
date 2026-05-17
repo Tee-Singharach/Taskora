@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
-import { PRIORITY_INFO, fmtDate, fmtRelative, deptById, statusBadgeClass, PRIORITY_ORDER, isOverdue } from '@/lib/utils'
+import { PRIORITY_INFO, fmtDate, fmtRelative, deptById, statusBadgeClass, PRIORITY_ORDER, isOverdue, fullName, formalName } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 import EmptyState from '@/components/ui/EmptyState'
@@ -44,7 +44,7 @@ export default function OfficerInboxPage() {
     <div className="p-4 lg:p-7 max-w-[1400px] mx-auto">
       <div className="mb-6">
         <h1 className="text-[22px] font-semibold tracking-tighter m-0">กล่องงาน</h1>
-        <div className="text-[13px] text-gray-500 mt-1">สวัสดี {currentUser?.name} · บริหารงานของคุณ</div>
+        <div className="text-[13px] text-gray-500 mt-1">สวัสดี {currentUser ? fullName(currentUser) : ''} · บริหารงานของคุณ</div>
       </div>
 
       {/* Tabs */}
@@ -105,8 +105,8 @@ export default function OfficerInboxPage() {
                       <div className="flex gap-4 mt-4 flex-wrap text-[12px] text-gray-500">
                         {requester && (
                           <div className="flex items-center gap-2">
-                            <Avatar name={requester.name} size="sm" />
-                            <span>{requester.name}</span>
+                            <Avatar name={fullName(requester)} size="sm" />
+                            <span>{formalName(requester)}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-1">
@@ -160,8 +160,8 @@ export default function OfficerInboxPage() {
                       <div className="flex gap-4 mt-4 flex-wrap text-[12px] text-gray-500">
                         {requester && (
                           <div className="flex items-center gap-2">
-                            <Avatar name={requester.name} size="sm" />
-                            <span>{requester.name}</span>
+                            <Avatar name={fullName(requester)} size="sm" />
+                            <span>{formalName(requester)}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-1">

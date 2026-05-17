@@ -10,18 +10,18 @@ export const MOCK_DEPARTMENTS: Department[] = [
 ]
 
 export const MOCK_USERS: User[] = [
-  { id: 'u01', name: 'สมชาย รุ่งโรจน์',          role: 'staff',   dept: 'mkt',   email: 'somchai.r@mojiflow.co' },
-  { id: 'u02', name: 'นภาพร เจริญสุข',           role: 'staff',   dept: 'fin',   email: 'naphaporn.j@mojiflow.co' },
-  { id: 'u03', name: 'วิทยา ชัยพัฒนา',           role: 'staff',   dept: 'mkt',   email: 'witthaya.c@mojiflow.co' },
-  { id: 'u04', name: 'พิมพ์ชนก ธีระวุฒิ',         role: 'staff',   dept: 'proc',  email: 'pimchanok.t@mojiflow.co' },
-  { id: 'u05', name: 'ฐิติพงษ์ อินทรประเสริฐ',    role: 'officer', dept: 'it',    email: 'thitiphong.i@mojiflow.co' },
-  { id: 'u06', name: 'ปิยะพร โกมลศรี',           role: 'officer', dept: 'hr',    email: 'piyaporn.k@mojiflow.co' },
-  { id: 'u07', name: 'ธนวัฒน์ ศิริชัย',           role: 'officer', dept: 'fin',   email: 'thanawat.s@mojiflow.co' },
-  { id: 'u08', name: 'อรนุช พงศ์พันธ์',           role: 'officer', dept: 'admin', email: 'oranuch.p@mojiflow.co' },
-  { id: 'u09', name: 'สุภัทรา วงศ์วิวัฒน์',        role: 'manager', dept: 'it',    email: 'suphattra.w@mojiflow.co' },
-  { id: 'u10', name: 'ประวิทย์ เกียรติยศ',         role: 'manager', dept: 'fin',   email: 'prawit.k@mojiflow.co' },
-  { id: 'u11', name: 'เกศินี ภู่ทองคำ',            role: 'manager', dept: 'hr',    email: 'kesinee.p@mojiflow.co' },
-  { id: 'u12', name: 'ชัยวัฒน์ พัฒนสุข',          role: 'admin',   dept: 'it',    email: 'chaiwat.p@mojiflow.co' },
+  { id: 'u01', title: 'นาย',   firstName: 'สมชาย',    lastName: 'รุ่งโรจน์',     role: 'staff',   dept: 'mkt',   email: 'somchai.r@taskora.co' },
+  { id: 'u02', title: 'นาง',   firstName: 'นภาพร',    lastName: 'เจริญสุข',      role: 'staff',   dept: 'fin',   email: 'naphaporn.j@taskora.co' },
+  { id: 'u03', title: 'นาย',   firstName: 'วิทยา',    lastName: 'ชัยพัฒนา',      role: 'staff',   dept: 'mkt',   email: 'witthaya.c@taskora.co' },
+  { id: 'u04', title: 'นางสาว',firstName: 'พิมพ์ชนก', lastName: 'ธีระวุฒิ',      role: 'staff',   dept: 'proc',  email: 'pimchanok.t@taskora.co' },
+  { id: 'u05', title: 'นาย',   firstName: 'ฐิติพงษ์', lastName: 'อินทรประเสริฐ', role: 'officer', dept: 'it',    email: 'thitiphong.i@taskora.co' },
+  { id: 'u06', title: 'นางสาว',firstName: 'ปิยะพร',   lastName: 'โกมลศรี',       role: 'officer', dept: 'hr',    email: 'piyaporn.k@taskora.co' },
+  { id: 'u07', title: 'นาย',   firstName: 'ธนวัฒน์',  lastName: 'ศิริชัย',       role: 'officer', dept: 'fin',   email: 'thanawat.s@taskora.co' },
+  { id: 'u08', title: 'นาง',   firstName: 'อรนุช',    lastName: 'พงศ์พันธ์',     role: 'officer', dept: 'admin', email: 'oranuch.p@taskora.co' },
+  { id: 'u09', title: 'นางสาว',firstName: 'สุภัทรา',  lastName: 'วงศ์วิวัฒน์',   role: 'manager', dept: 'it',    email: 'suphattra.w@taskora.co' },
+  { id: 'u10', title: 'นาย',   firstName: 'ประวิทย์', lastName: 'เกียรติยศ',     role: 'manager', dept: 'fin',   email: 'prawit.k@taskora.co' },
+  { id: 'u11', title: 'นาง',   firstName: 'เกศินี',   lastName: 'ภู่ทองคำ',      role: 'manager', dept: 'hr',    email: 'kesinee.p@taskora.co' },
+  { id: 'u12', title: 'นาย',   firstName: 'ชัยวัฒน์', lastName: 'พัฒนสุข',       role: 'admin',   dept: 'it',    email: 'chaiwat.p@taskora.co' },
 ]
 
 function d(yyyy: number, mm: number, dd: number, hh = 9, min = 0): string {

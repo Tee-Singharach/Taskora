@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react'
 import type { AppStore, User, Department, Request, RequestStatus, RequestPriority, ToastItem, AuditEntry } from '@/lib/types'
 import { loadStore, saveStore } from '@/lib/store'
-import { genId, fmtDate } from '@/lib/utils'
+import { genId, fmtDate, fullName } from '@/lib/utils'
 
 interface AppContextType {
   store: AppStore
@@ -105,7 +105,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!req) return prev
       const u = prev.users.find(u => u.id === prev.currentUserId)
       const now = new Date().toISOString()
-      const ev = { kind: 'system' as const, actorId: prev.currentUserId, time: now, msg: `${u?.name ?? '—'} รับงานและเริ่มดำเนินการ` }
+      const ev = { kind: 'system' as const, actorId: prev.currentUserId, time: now, msg: `${u ? fullName(u) : '—'} รับงานและเริ่มดำเนินการ` }
       return {
         ...prev,
         requests: prev.requests.map(r => r.id === id
@@ -121,13 +121,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setStore(prev => {
       const assignee = prev.users.find(u => u.id === assigneeId)
       const now = new Date().toISOString()
-      const ev = { kind: 'system' as const, actorId: prev.currentUserId, time: now, msg: `มอบหมายงานให้ ${assignee?.name ?? assigneeId}${note ? ' — ' + note : ''}` }
+      const ev = { kind: 'system' as const, actorId: prev.currentUserId, time: now, msg: `มอบหมายงานให้ ${assignee ? fullName(assignee) : assigneeId}${note ? ' — ' + note : ''}` }
       return {
         ...prev,
         requests: prev.requests.map(r => r.id === id
           ? { ...r, assigneeId, events: [...r.events, ev] }
           : r),
-        auditLog: [...prev.auditLog, pushAudit(prev, 'มอบหมายงาน', id, `ส่งต่อให้ ${assignee?.name}`, 'workflow')],
+        auditLog: [...prev.auditLog, pushAudit(prev, 'มอบหมายงาน', id, `ส่งต่อให้ ${assignee ? fullName(assignee) : assigneeId}`, 'workflow')],
       }
     })
     showToast('success', 'มอบหมายงานเรียบร้อย')
@@ -166,7 +166,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setStore(prev => {
       const now = new Date().toISOString()
       const approver = prev.requests.find(r => r.id === id)?.approverId
-      const approverName = prev.users.find(u => u.id === approver)?.name ?? 'หัวหน้างาน'
+      const approverUser = prev.users.find(u => u.id === approver)
+      const approverName = approverUser ? fullName(approverUser) : 'หัวหน้างาน'
       const ev = { kind: 'system' as const, actorId: prev.currentUserId, time: now, msg: `ส่งเรื่องให้ ${approverName} พิจารณาอนุมัติ` }
       return {
         ...prev,
@@ -227,7 +228,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setStore(prev => ({
       ...prev,
       users: [...prev.users, { ...data, id: genId('u') }],
-      auditLog: [...prev.auditLog, pushAudit(prev, 'สร้างผู้ใช้ใหม่', data.name, `${data.email}`, 'user')],
+      auditLog: [...prev.auditLog, pushAudit(prev, 'สร้างผู้ใช้ใหม่', fullName(data), `${data.email}`, 'user')],
     }))
     showToast('success', 'เพิ่มผู้ใช้เรียบร้อย')
   }, [showToast, pushAudit])
@@ -247,7 +248,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return {
         ...prev,
         users: prev.users.filter(u => u.id !== id),
-        auditLog: [...prev.auditLog, pushAudit(prev, 'ลบผู้ใช้', u?.name ?? id, '', 'user')],
+        auditLog: [...prev.auditLog, pushAudit(prev, 'ลบผู้ใช้', u ? fullName(u) : id, '', 'user')],
       }
     })
     showToast('warning', 'ลบผู้ใช้แล้ว')

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
 import {
   STATUS_INFO, PRIORITY_INFO, ROLE_INFO, fmtDate, fmtDateTime, fmtRelative,
-  statusBadgeClass, deptById, avatarColor, avatarInitials,
+  statusBadgeClass, deptById, avatarColor, avatarInitials, fullName, formalName,
 } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
@@ -161,20 +161,20 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
             <dl className="grid grid-cols-[110px_1fr] gap-x-4 gap-y-3 text-[13px]">
               <dt className="text-gray-500 text-[12px]">ผู้ยื่น</dt>
               <dd className="m-0 flex items-center gap-2">
-                <Avatar name={requester?.name ?? '?'} size="sm"/>
-                <span className="text-gray-900">{requester?.name ?? '—'}</span>
+                <Avatar name={requester ? fullName(requester) : '?'} size="sm"/>
+                <span className="text-gray-900">{requester ? formalName(requester) : '—'}</span>
               </dd>
               <dt className="text-gray-500 text-[12px]">ผู้รับผิดชอบ</dt>
               <dd className="m-0 flex items-center gap-2">
                 {assignee ? (
                   <>
-                    <Avatar name={assignee.name} size="sm"/>
-                    <span className="text-gray-900">{assignee.name}</span>
+                    <Avatar name={fullName(assignee)} size="sm"/>
+                    <span className="text-gray-900">{formalName(assignee)}</span>
                   </>
                 ) : <span className="text-gray-400">ยังไม่มอบหมาย</span>}
               </dd>
               <dt className="text-gray-500 text-[12px]">ผู้อนุมัติ</dt>
-              <dd className="m-0 text-gray-900">{approver?.name ?? '—'}</dd>
+              <dd className="m-0 text-gray-900">{approver ? formalName(approver) : '—'}</dd>
               <dt className="text-gray-500 text-[12px]">ฝ่าย</dt>
               <dd className="m-0 text-gray-900">{deptById(request.department, store.departments)?.name ?? request.department}</dd>
               <dt className="text-gray-500 text-[12px]">วันที่สร้าง</dt>
@@ -218,10 +218,10 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
                   const actor = store.users.find(u => u.id === ev.actorId)
                   return (
                     <div key={i} className="flex gap-3">
-                      <Avatar name={actor?.name ?? 'ระบบ'} size="sm"/>
+                      <Avatar name={actor ? fullName(actor) : 'ระบบ'} size="sm"/>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2 mb-1">
-                          <span className="text-[13px] font-semibold text-gray-900">{actor?.name ?? 'ระบบ'}</span>
+                          <span className="text-[13px] font-semibold text-gray-900">{actor ? formalName(actor) : 'ระบบ'}</span>
                           <span className="text-[11px] text-gray-400">{fmtRelative(ev.time)}</span>
                         </div>
                         <div className={`p-2.5 px-3 rounded-md text-[13px] border ${ev.kind === 'approve' ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : ev.kind === 'reject' ? 'bg-red-50 text-red-800 border-red-100' : 'bg-gray-50 border-gray-100 text-gray-800'}`}>
@@ -395,9 +395,9 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
                 {officers.map(u => (
                   <label key={u.id} className={`flex items-center gap-3 p-3 border rounded-md cursor-pointer transition-colors ${assigneeId === u.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white hover:border-indigo-200'}`}>
                     <input type="radio" name="assignee" value={u.id} checked={assigneeId === u.id} onChange={() => setAssigneeId(u.id)}/>
-                    <Avatar name={u.name} size="sm"/>
+                    <Avatar name={fullName(u)} size="sm"/>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-medium text-gray-900">{u.name}</div>
+                      <div className="text-[13px] font-medium text-gray-900">{formalName(u)}</div>
                       <div className="text-[11px] text-gray-400">{ROLE_INFO[u.role].th}</div>
                     </div>
                   </label>

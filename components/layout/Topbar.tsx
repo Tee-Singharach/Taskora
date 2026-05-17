@@ -10,6 +10,7 @@ const BREADCRUMBS: Record<string, string[]> = {
   '/requests':        ['คำร้องทั้งหมด'],
   '/requests/new':    ['คำร้องทั้งหมด', 'สร้างใหม่'],
   '/approval':        ['รออนุมัติ'],
+  '/settings':        ['การตั้งค่า'],
   '/admin/users':     ['ผู้ดูแลระบบ', 'ผู้ใช้และบทบาท'],
   '/admin/audit':     ['ผู้ดูแลระบบ', 'Audit Log'],
 }

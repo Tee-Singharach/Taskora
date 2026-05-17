@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
-import { STATUS_INFO, PRIORITY_INFO, fmtDate, fmtRelative, statusBadgeClass, deptById } from '@/lib/utils'
+import { STATUS_INFO, PRIORITY_INFO, fmtDate, fmtRelative, statusBadgeClass, deptById, fullName, formalName } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 import type { RequestStatus, RequestPriority } from '@/lib/types'
@@ -163,8 +163,8 @@ export default function RequestsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <Avatar name={requester?.name ?? '?'} size="sm"/>
-                        <span className="text-[12px] text-gray-600">{requester?.name ?? '—'}</span>
+                        <Avatar name={requester ? fullName(requester) : '?'} size="sm"/>
+                        <span className="text-[12px] text-gray-600">{requester ? formalName(requester) : '—'}</span>
                       </div>
                     </td>
                     <td className={`px-4 py-3 text-[12px] whitespace-nowrap ${overdue ? 'text-red-600' : 'text-gray-500'}`}>

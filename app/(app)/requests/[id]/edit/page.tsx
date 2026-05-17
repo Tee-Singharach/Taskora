@@ -3,13 +3,13 @@
 import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
-import { DEPARTMENTS } from '@/lib/utils'
 import type { RequestPriority } from '@/lib/types'
 
 export default function EditRequestPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ from?: string }> }) {
   const { id } = use(params)
   const { from } = use(searchParams)
   const { store, updateRequest, showToast } = useApp()
+  const departments = store.departments
   const router = useRouter()
 
   const backPath = from ? `/requests/${id}?from=${encodeURIComponent(from)}` : `/requests/${id}`
@@ -20,7 +20,7 @@ export default function EditRequestPage({ params, searchParams }: { params: Prom
     title: request?.title ?? '',
     description: request?.description ?? '',
     priority: (request?.priority ?? 'normal') as RequestPriority,
-    department: request?.department ?? DEPARTMENTS[0].id,
+    department: request?.department ?? '',
     dueAt: request?.dueAt ? request.dueAt.split('T')[0] : '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -98,7 +98,7 @@ export default function EditRequestPage({ params, searchParams }: { params: Prom
             <div className="flex flex-col gap-1.5">
               <label className="text-[12px] font-medium text-gray-500">ฝ่าย / แผนก</label>
               <select className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500" value={form.department} onChange={e => set('department', e.target.value)}>
-                {DEPARTMENTS.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </div>
           </div>

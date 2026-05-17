@@ -1,8 +1,8 @@
 import type { AppStore } from './types'
 import { MOCK_USERS, MOCK_REQUESTS, MOCK_AUDIT, MOCK_DEPARTMENTS } from './mockData'
 
-const STORAGE_KEY = 'mojiflow_store'
-const SCHEMA_VERSION = 3
+const STORAGE_KEY = 'taskora_store'
+const SCHEMA_VERSION = 4
 
 export function getInitialStore(): AppStore {
   return {
@@ -21,10 +21,6 @@ export function loadStore(): AppStore {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return getInitialStore()
     const parsed = JSON.parse(raw) as AppStore
-    // migrate v2 → v3: add departments
-    if (parsed.schemaVersion === 2) {
-      return { ...parsed, departments: MOCK_DEPARTMENTS, schemaVersion: SCHEMA_VERSION }
-    }
     if (parsed.schemaVersion !== SCHEMA_VERSION) return getInitialStore()
     return parsed
   } catch {

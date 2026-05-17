@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
-import { PRIORITY_INFO, fmtDate, fmtRelative, deptById } from '@/lib/utils'
+import { PRIORITY_INFO, fmtDate, fmtRelative, deptById, fullName, formalName } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 
@@ -86,8 +86,8 @@ export default function ApprovalPage() {
                     <div className="flex gap-4 mt-4 flex-wrap text-[12px] text-gray-500">
                       {requester && (
                         <div className="flex items-center gap-2">
-                          <Avatar name={requester.name} size="sm"/>
-                          <span>{requester.name}</span>
+                          <Avatar name={fullName(requester)} size="sm"/>
+                          <span>{formalName(requester)}</span>
                         </div>
                       )}
                       <div className="flex items-center gap-1">
