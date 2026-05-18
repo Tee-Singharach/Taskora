@@ -134,23 +134,30 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
       </div>
 
       {!isRejected && (
-        <div className="flex items-center gap-0 p-5 bg-slate-50 rounded-lg mb-5 flex-wrap">
-          {WF_STEPS.map((step, i) => {
-            const stepIdx = WF_ORDER.indexOf(step.key)
-            const done    = stepIdx < currentWfIdx
-            const current = stepIdx === currentWfIdx
-            return (
-              <div key={step.key} className="flex items-center gap-2">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0 ${done ? 'bg-emerald-500 text-white' : current ? 'bg-indigo-600 text-white ring-4 ring-indigo-100' : 'bg-white text-gray-400 border border-gray-300'}`}>
-                  {done ? '✓' : i + 1}
+        <div className="overflow-x-auto mb-5">
+          <div className="flex items-start p-4 sm:p-5 bg-slate-50 rounded-lg min-w-[340px]">
+            {WF_STEPS.map((step, i) => {
+              const stepIdx = WF_ORDER.indexOf(step.key)
+              const done    = stepIdx < currentWfIdx
+              const current = stepIdx === currentWfIdx
+              const isLast  = i === WF_STEPS.length - 1
+              return (
+                <div key={step.key} className={`flex items-start ${!isLast ? 'flex-1 min-w-0' : 'flex-shrink-0'}`}>
+                  <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold transition-all ${done ? 'bg-emerald-500 text-white' : current ? 'bg-indigo-600 text-white ring-4 ring-indigo-100' : 'bg-white text-gray-400 border-2 border-gray-300'}`}>
+                      {done ? '✓' : i + 1}
+                    </div>
+                    <span className={`text-[11px] font-medium whitespace-nowrap ${current ? 'text-indigo-600' : done ? 'text-gray-700' : 'text-gray-400'}`}>
+                      {step.label}
+                    </span>
+                  </div>
+                  {!isLast && (
+                    <div className={`flex-1 h-0.5 mt-3.5 mx-2 ${done ? 'bg-emerald-400' : 'bg-gray-300'}`}/>
+                  )}
                 </div>
-                <span className={`text-[13px] font-medium ${current ? 'text-gray-900 font-semibold' : done ? 'text-gray-900' : 'text-gray-500'}`}>{step.label}</span>
-                {i < WF_STEPS.length - 1 && (
-                  <div className={`w-8 h-0.5 mx-2 flex-shrink-0 ${done ? 'bg-emerald-500' : 'bg-gray-300'}`}/>
-                )}
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       )}
 
@@ -480,10 +487,7 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
                       className={`flex items-center gap-3 p-3 border rounded-md cursor-pointer transition-colors ${newStatus === s ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100' : 'border-gray-200 hover:bg-gray-50'} ${isCurrent ? 'opacity-60' : ''}`}
                     >
                       <input type="radio" name="status" value={s} checked={newStatus === s} onChange={() => setNewStatus(s)}/>
-                      <div className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <span className={`${statusBadgeClass(s)} !text-[10px]`}>{info.label}</span>
-                      </div>
-                      <span className="text-[13px]">{info.label}</span>
+                      <span className={statusBadgeClass(s)}>{info.label}</span>
                       {isCurrent && <span className="ml-auto text-[10px] text-gray-400">ปัจจุบัน</span>}
                     </label>
                   )

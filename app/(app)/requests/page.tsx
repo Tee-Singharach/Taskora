@@ -76,8 +76,8 @@ export default function RequestsPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex flex-col gap-3 p-3 bg-white border border-gray-200 rounded-t-lg md:gap-2.5 md:flex-wrap md:flex-row md:items-center">
-        <div className="flex gap-2 flex-wrap w-full">
+      <div className="flex flex-col gap-3 p-3 bg-white border border-gray-200 rounded-t-lg lg:flex-row lg:items-center lg:justify-between lg:gap-2">
+        <div className="flex gap-2 flex-wrap">
           {STATUS_PILLS.map(p => (
             <button
               key={p.value}
@@ -94,33 +94,35 @@ export default function RequestsPage() {
           ))}
         </div>
 
-        <div className="relative w-full md:w-[240px]">
-          <Icon name="search" size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"/>
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="ค้นหา..."
-            className="w-full bg-white border border-gray-200 rounded-md py-1.5 pl-8 pr-3 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-          />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center lg:shrink-0">
+          <div className="relative">
+            <Icon name="search" size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400"/>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="ค้นหา..."
+              className="w-full sm:w-[200px] bg-white border border-gray-200 rounded-md py-1.5 pl-8 pr-3 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+            />
+          </div>
+
+          <select className="bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={deptFilter} onChange={e => setDeptFilter(e.target.value)}>
+            <option value="all">ทุกฝ่าย</option>
+            {store.departments.map(d => <option key={d.id} value={d.id}>{d.short}</option>)}
+          </select>
+
+          <select className="bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value as RequestPriority | 'all')}>
+            <option value="all">ทุกความสำคัญ</option>
+            {(['urgent','high','normal','low'] as const).map(p => (
+              <option key={p} value={p}>{PRIORITY_INFO[p].label}</option>
+            ))}
+          </select>
+
+          <select className="bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)}>
+            <option value="createdAt">วันที่สร้าง</option>
+            <option value="dueAt">วันกำหนด</option>
+            <option value="priority">ความสำคัญ</option>
+          </select>
         </div>
-
-        <select className="w-full md:w-auto bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={deptFilter} onChange={e => setDeptFilter(e.target.value)}>
-          <option value="all">ทุกฝ่าย</option>
-          {store.departments.map(d => <option key={d.id} value={d.id}>{d.short}</option>)}
-        </select>
-
-        <select className="w-full md:w-auto bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value as RequestPriority | 'all')}>
-          <option value="all">ทุกความสำคัญ</option>
-          {(['urgent','high','normal','low'] as const).map(p => (
-            <option key={p} value={p}>{PRIORITY_INFO[p].label}</option>
-          ))}
-        </select>
-
-        <select className="w-full md:w-auto bg-white border border-gray-200 rounded-md py-1.5 px-3 text-[13px] focus:border-indigo-500 outline-none" value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)}>
-          <option value="createdAt">วันที่สร้าง</option>
-          <option value="dueAt">วันกำหนด</option>
-          <option value="priority">ความสำคัญ</option>
-        </select>
       </div>
 
       {/* Table */}
