@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
-import { STATUS_INFO, PRIORITY_INFO, fmtDate, fmtRelative, statusBadgeClass, fullName } from '@/lib/utils'
+import { STATUS_INFO, fmtDate, statusBadgeClass, fullName } from '@/lib/utils'
 import Avatar from '@/components/ui/Avatar'
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 

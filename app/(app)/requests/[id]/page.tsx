@@ -4,11 +4,17 @@ import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
 import {
-  STATUS_INFO, PRIORITY_INFO, ROLE_INFO, fmtDate, fmtDateTime, fmtRelative,
-  statusBadgeClass, deptById, avatarColor, avatarInitials, fullName, formalName,
+  STATUS_INFO, PRIORITY_INFO, ROLE_INFO, fmtDate, fmtRelative,
+  statusBadgeClass, deptById, fullName, formalName,
 } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
+import TakeModal from '@/components/requests/TakeModal'
+import ApproveModal from '@/components/requests/ApproveModal'
+import RejectModal from '@/components/requests/RejectModal'
+import AssignModal from '@/components/requests/AssignModal'
+import ProgressModal from '@/components/requests/ProgressModal'
+import StatusModal from '@/components/requests/StatusModal'
 import type { RequestStatus } from '@/lib/types'
 
 const WF_STEPS: { key: RequestStatus; label: string }[] = [
@@ -27,7 +33,7 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
   const {
     store, currentUser,
     takeRequest, reassignRequest, changeStatus,
-    updateProgress, submitForApproval,
+    updateProgress,
     approveRequest, rejectRequest, addComment,
   } = useApp()
   const router = useRouter()
@@ -36,12 +42,8 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
 
   const request = store.requests.find(r => r.id === id)
 
-  const [modal, setModal]       = useState<ModalKind>(null)
-  const [note, setNote]         = useState('')
-  const [assigneeId, setAssigneeId] = useState('')
-  const [newStatus, setNewStatus]   = useState<RequestStatus>('open')
-  const [progress, setProgress]     = useState(request?.progress ?? 0)
-  const [comment, setComment]       = useState('')
+  const [modal, setModal]     = useState<ModalKind>(null)
+  const [comment, setComment] = useState('')
 
   if (!request) {
     return (
@@ -70,41 +72,8 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
   const currentWfIdx = WF_ORDER.indexOf(request.status)
   const isRejected = request.status === 'rejected'
 
-  function openModal(kind: ModalKind) {
-    setNote('')
-    if (kind === 'assign') setAssigneeId(request!.assigneeId ?? '')
-    if (kind === 'status') setNewStatus(request!.status)
-    if (kind === 'progress') setProgress(request!.progress)
-    setModal(kind)
-  }
   function closeModal() { setModal(null) }
 
-  function confirmTake() {
-    takeRequest(id)
-    closeModal()
-  }
-  function confirmApprove() {
-    approveRequest(id, note)
-    closeModal()
-  }
-  function confirmReject() {
-    if (!note.trim()) return
-    rejectRequest(id, note)
-    closeModal()
-  }
-  function confirmAssign() {
-    if (!assigneeId) return
-    reassignRequest(id, assigneeId, note)
-    closeModal()
-  }
-  function confirmProgress() {
-    updateProgress(id, progress, note || `อัปเดตความคืบหน้า ${progress}%`)
-    closeModal()
-  }
-  function confirmStatus() {
-    changeStatus(id, newStatus, note)
-    closeModal()
-  }
   function handleComment() {
     if (!comment.trim()) return
     addComment(id, comment.trim())
@@ -278,21 +247,21 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
               </div>
 
               <div className="grid grid-cols-3 gap-2">
-                <button className="flex flex-col items-center gap-1.5 p-3 bg-white border border-gray-200 rounded-md hover:border-indigo-500 transition-colors disabled:opacity-50" disabled={request.status !== 'open'} onClick={() => openModal('take')}>
+                <button className="flex flex-col items-center gap-1.5 p-3 bg-white border border-gray-200 rounded-md hover:border-indigo-500 transition-colors disabled:opacity-50" disabled={request.status !== 'open'} onClick={() => setModal('take')}>
                   <Icon name="play" size={16} className="text-indigo-600"/>
                   <span className="text-[12px] font-semibold">รับงาน</span>
                 </button>
-                <button className="flex flex-col items-center gap-1.5 p-3 bg-white border border-gray-200 rounded-md hover:border-indigo-500 transition-colors" onClick={() => openModal('assign')}>
+                <button className="flex flex-col items-center gap-1.5 p-3 bg-white border border-gray-200 rounded-md hover:border-indigo-500 transition-colors" onClick={() => setModal('assign')}>
                   <Icon name="users" size={16} className="text-indigo-600"/>
                   <span className="text-[12px] font-semibold">มอบหมาย</span>
                 </button>
-                <button className="flex flex-col items-center gap-1.5 p-3 bg-white border border-gray-200 rounded-md hover:border-indigo-500 transition-colors disabled:opacity-50" disabled={request.status === 'open' || request.status === 'completed' || request.status === 'rejected'} onClick={() => openModal('progress')}>
+                <button className="flex flex-col items-center gap-1.5 p-3 bg-white border border-gray-200 rounded-md hover:border-indigo-500 transition-colors disabled:opacity-50" disabled={request.status === 'open' || request.status === 'completed' || request.status === 'rejected'} onClick={() => setModal('progress')}>
                   <Icon name="zap" size={16} className="text-indigo-600"/>
                   <span className="text-[12px] font-semibold">ความคืบหน้า</span>
                 </button>
               </div>
 
-              <button className="w-full flex items-center justify-between p-3 mt-4 bg-white border border-dashed border-indigo-400 rounded-md text-[12px] text-gray-700 hover:bg-indigo-50" onClick={() => openModal('status')}>
+              <button className="w-full flex items-center justify-between p-3 mt-4 bg-white border border-dashed border-indigo-400 rounded-md text-[12px] text-gray-700 hover:bg-indigo-50" onClick={() => setModal('status')}>
                 เปลี่ยนสถานะ
                 <Icon name="shuffle" size={13}/>
               </button>
@@ -306,10 +275,10 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
                 <div className="text-[12px] text-gray-500 mt-0.5">รอการพิจารณาจากคุณ</div>
               </div>
               <div className="flex flex-col gap-2">
-                <button className="w-full flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 text-[14px] font-medium" onClick={() => openModal('approve')}>
+                <button className="w-full flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 text-[14px] font-medium" onClick={() => setModal('approve')}>
                   <Icon name="check" size={14}/> อนุมัติคำร้อง
                 </button>
-                <button className="w-full flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 text-[14px] font-medium" onClick={() => openModal('reject')}>
+                <button className="w-full flex items-center justify-center gap-1.5 px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 text-[14px] font-medium" onClick={() => setModal('reject')}>
                   <Icon name="x" size={14}/> ปฏิเสธคำร้อง
                 </button>
               </div>
@@ -319,187 +288,50 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
       </div>
 
       {modal === 'take' && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200] p-6 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) closeModal() }}>
-          <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-full max-w-[400px] flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-gray-200">
-              <div className="text-[16px] font-semibold">ยืนยันการรับงาน</div>
-              <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100" onClick={closeModal}><Icon name="x" size={16}/></button>
-            </div>
-            <div className="p-6">
-              <p className="text-[13px] text-gray-600 leading-relaxed">
-                คุณต้องการรับงาน <strong className="text-gray-900">"{request.title}"</strong> และเริ่มดำเนินการใช่หรือไม่?
-              </p>
-              <p className="text-[12px] text-amber-600 mt-3 bg-amber-50 border border-amber-100 rounded-md p-2.5">
-                เมื่อรับงานแล้ว สถานะจะเปลี่ยนเป็น "กำลังดำเนินการ" และงานจะถูกมอบหมายให้คุณ
-              </p>
-            </div>
-            <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-200">
-              <button className="px-4 py-2 text-[14px] rounded-md border border-gray-200 hover:bg-gray-50" onClick={closeModal}>ยกเลิก</button>
-              <button className="flex items-center gap-1.5 px-4 py-2 text-[14px] rounded-md bg-indigo-600 text-white hover:bg-indigo-700" onClick={confirmTake}>
-                <Icon name="play" size={13}/> ยืนยันรับงาน
-              </button>
-            </div>
-          </div>
-        </div>
+        <TakeModal
+          requestTitle={request.title}
+          onClose={closeModal}
+          onConfirm={() => { takeRequest(id); closeModal() }}
+        />
       )}
 
       {modal === 'approve' && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200] p-6 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) closeModal() }}>
-          <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-full max-w-[440px] flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-gray-200">
-              <div className="text-[16px] font-semibold">อนุมัติคำร้อง</div>
-              <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100" onClick={closeModal}><Icon name="x" size={16}/></button>
-            </div>
-            <div className="p-6">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-medium text-gray-500">หมายเหตุ (ถ้ามี)</label>
-                <textarea className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500" rows={3} value={note} onChange={e => setNote(e.target.value)} placeholder="ข้อความถึงผู้ยื่น..."/>
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-200">
-              <button className="px-4 py-2 text-[14px] rounded-md border border-gray-200 hover:bg-gray-50" onClick={closeModal}>ยกเลิก</button>
-              <button className="px-4 py-2 text-[14px] rounded-md bg-emerald-600 text-white hover:bg-emerald-700" onClick={confirmApprove}>
-                <Icon name="check" size={14}/> ยืนยันอนุมัติ
-              </button>
-            </div>
-          </div>
-        </div>
+        <ApproveModal
+          onClose={closeModal}
+          onConfirm={note => { approveRequest(id, note); closeModal() }}
+        />
       )}
 
       {modal === 'reject' && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200] p-6 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) closeModal() }}>
-          <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-full max-w-[440px] flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-gray-200">
-              <div className="text-[16px] font-semibold">ปฏิเสธคำร้อง</div>
-              <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100" onClick={closeModal}><Icon name="x" size={16}/></button>
-            </div>
-            <div className="p-6">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-medium text-gray-500">เหตุผลการปฏิเสธ <span className="text-red-500">*</span></label>
-                <textarea className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500" rows={4} value={note} onChange={e => setNote(e.target.value)} placeholder="ระบุเหตุผลให้ชัดเจน..."/>
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-200">
-              <button className="px-4 py-2 text-[14px] rounded-md border border-gray-200 hover:bg-gray-50" onClick={closeModal}>ยกเลิก</button>
-              <button className="px-4 py-2 text-[14px] rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" onClick={confirmReject} disabled={!note.trim()}>
-                <Icon name="x" size={14}/> ยืนยันปฏิเสธ
-              </button>
-            </div>
-          </div>
-        </div>
+        <RejectModal
+          onClose={closeModal}
+          onConfirm={note => { rejectRequest(id, note); closeModal() }}
+        />
       )}
 
       {modal === 'assign' && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200] p-6 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) closeModal() }}>
-          <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-full max-w-[440px] flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between p-5 border-b border-gray-200">
-              <div className="text-[16px] font-semibold">มอบหมายงาน</div>
-              <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100" onClick={closeModal}><Icon name="x" size={16}/></button>
-            </div>
-            <div className="p-6 overflow-y-auto">
-              <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">เลือกผู้รับผิดชอบ</div>
-              <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto">
-                {officers.map(u => (
-                  <label key={u.id} className={`flex items-center gap-3 p-3 border rounded-md cursor-pointer transition-colors ${assigneeId === u.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white hover:border-indigo-200'}`}>
-                    <input type="radio" name="assignee" value={u.id} checked={assigneeId === u.id} onChange={() => setAssigneeId(u.id)}/>
-                    <Avatar name={fullName(u)} size="sm"/>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-medium text-gray-900">{formalName(u)}</div>
-                      <div className="text-[11px] text-gray-400">{ROLE_INFO[u.role].th}</div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-              <div className="flex flex-col gap-1.5 mt-4">
-                <label className="text-[12px] font-medium text-gray-500">หมายเหตุ</label>
-                <input className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500" type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="เหตุผลการมอบหมาย..."/>
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-200">
-              <button className="px-4 py-2 text-[14px] rounded-md border border-gray-200 hover:bg-gray-50" onClick={closeModal}>ยกเลิก</button>
-              <button className="px-4 py-2 text-[14px] rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50" onClick={confirmAssign} disabled={!assigneeId}>
-                บันทึก
-              </button>
-            </div>
-          </div>
-        </div>
+        <AssignModal
+          officers={officers}
+          currentAssigneeId={request.assigneeId}
+          onClose={closeModal}
+          onConfirm={(assigneeId, note) => { reassignRequest(id, assigneeId, note); closeModal() }}
+        />
       )}
 
       {modal === 'progress' && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200] p-6 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) closeModal() }}>
-          <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-full max-w-[440px] flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-gray-200">
-              <div className="text-[16px] font-semibold">อัปเดตความคืบหน้า</div>
-              <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100" onClick={closeModal}><Icon name="x" size={16}/></button>
-            </div>
-            <div className="p-6">
-              <div className="p-4 bg-slate-50 border border-gray-200 rounded-md flex flex-col gap-3.5 mb-4">
-                <div className="text-[48px] font-bold text-indigo-600 flex items-baseline justify-center leading-[1]">
-                  {progress}<span className="text-[22px] text-gray-400 font-medium ml-1">%</span>
-                </div>
-                <div className="relative h-[14px] flex items-center">
-                  <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-600 rounded-full transition-all" style={{ width: `${progress}%` }}/>
-                  </div>
-                  <input
-                    type="range" min={0} max={100} step={5}
-                    value={progress}
-                    onChange={e => setProgress(Number(e.target.value))}
-                    className="absolute w-full opacity-0 cursor-pointer h-full"
-                  />
-                </div>
-                <div className="flex gap-1.5 justify-center flex-wrap">
-                  {[0,10,25,50,75,90,100].map(v => (
-                    <button key={v} className={`px-3 py-1 rounded-full text-[12px] border transition-all ${progress === v ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white border-gray-200 text-gray-900 hover:border-indigo-600'}`} onClick={() => setProgress(v)}>
-                      {v}%
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-medium text-gray-500">หมายเหตุ</label>
-                <input className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500" type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="รายละเอียดความคืบหน้า..."/>
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-200">
-              <button className="px-4 py-2 text-[14px] rounded-md border border-gray-200 hover:bg-gray-50" onClick={closeModal}>ยกเลิก</button>
-              <button className="px-4 py-2 text-[14px] rounded-md bg-indigo-600 text-white hover:bg-indigo-700" onClick={confirmProgress}>บันทึก</button>
-            </div>
-          </div>
-        </div>
+        <ProgressModal
+          initialProgress={request.progress}
+          onClose={closeModal}
+          onConfirm={(progress, note) => { updateProgress(id, progress, note || `อัปเดตความคืบหน้า ${progress}%`); closeModal() }}
+        />
       )}
 
       {modal === 'status' && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[200] p-6 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) closeModal() }}>
-          <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-full max-w-[440px] flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-gray-200">
-              <div className="text-[16px] font-semibold">เปลี่ยนสถานะ</div>
-              <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100" onClick={closeModal}><Icon name="x" size={16}/></button>
-            </div>
-            <div className="p-6">
-              <div className="flex flex-col gap-2">
-                {(['open','in_progress','waiting_approval','completed','rejected'] as const).map(s => {
-                  const info = STATUS_INFO[s]
-                  const isCurrent = s === request.status
-                  return (
-                    <label
-                      key={s}
-                      className={`flex items-center gap-3 p-3 border rounded-md cursor-pointer transition-colors ${newStatus === s ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100' : 'border-gray-200 hover:bg-gray-50'} ${isCurrent ? 'opacity-60' : ''}`}
-                    >
-                      <input type="radio" name="status" value={s} checked={newStatus === s} onChange={() => setNewStatus(s)}/>
-                      <span className={statusBadgeClass(s)}>{info.label}</span>
-                      {isCurrent && <span className="ml-auto text-[10px] text-gray-400">ปัจจุบัน</span>}
-                    </label>
-                  )
-                })}
-              </div>
-              <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-200">
-                <button className="px-4 py-2 text-[14px] rounded-md border border-gray-200 hover:bg-gray-50" onClick={closeModal}>ยกเลิก</button>
-                <button className="px-4 py-2 text-[14px] rounded-md bg-indigo-600 text-white hover:bg-indigo-700" onClick={confirmStatus}>บันทึก</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatusModal
+          currentStatus={request.status}
+          onClose={closeModal}
+          onConfirm={status => { changeStatus(id, status, ''); closeModal() }}
+        />
       )}
     </div>
   )

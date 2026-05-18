@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Role {
+  staff
+  officer
+  manager
+  admin
+}
+
+enum UserTitle {
+  นาย
+  นาง
+  นางสาว
+  ดร
+  รศ
+  ศ
+}
+
+enum RequestStatus {
+  open
+  in_progress
+  waiting_approval
+  completed
+  rejected
+}
+
+enum RequestPriority {
+  low
+  normal
+  high
+  urgent
+}
+
+enum EventKind {
+  system
+  comment
+  approve
+  reject
+}
+
+enum AuditCategory {
+  workflow
+  user
+  security
+  system
+}
+
+model Department {
+  id       String    @id @db.VarChar(50)
+  name     String    @db.VarChar(100)
+  short    String    @db.VarChar(20)
+  color    String    @db.VarChar(30)
+  users    User[]
+  requests Request[]
+
+  @@map("departments")
+}
+
+model User {
+  id         String    @id @db.VarChar(50)
+  title      UserTitle
+  firstName  String    @db.VarChar(100)
+  lastName   String    @db.VarChar(100)
+  email      String    @unique @db.VarChar(191)
+  role       Role
+  dept       String    @db.VarChar(50)
+  department Department @relation(fields: [dept], references: [id])
+
+  requestsMade     Request[] @relation("requester")
+  requestsAssigned Request[] @relation("assignee")
+  requestsApproved Request[] @relation("approver")
+  events           RequestEvent[]
+
+  @@map("users")
+}
+
+model Request {
+  id          String          @id @db.VarChar(50)
+  title       String          @db.VarChar(255)
+  description String          @db.Text
+  priority    RequestPriority @default(normal)
+  status      RequestStatus   @default(open)
+  progress    Int             @default(0) @db.TinyInt
+  createdAt   DateTime        @default(now())
+  dueAt       DateTime
+
+  requesterId String    @db.VarChar(50)
+  assigneeId  String?   @db.VarChar(50)
+  approverId  String    @db.VarChar(50)
+  department  String    @db.VarChar(50)
+
+  requester    User        @relation("requester", fields: [requesterId], references: [id])
+  assignee     User?       @relation("assignee", fields: [assigneeId], references: [id])
+  approver     User        @relation("approver", fields: [approverId], references: [id])
+  dept         Department  @relation(fields: [department], references: [id])
+  events       RequestEvent[]
+  attachments  RequestAttachment[]
+
+  @@map("requests")
+}
+
+model RequestEvent {
+  id        Int       @id @default(autoincrement())
+  requestId String    @db.VarChar(50)
+  kind      EventKind
+  actorId   String    @db.VarChar(50)
+  time      DateTime  @default(now())
+  msg       String    @db.Text
+
+  request   Request   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actor     User      @relation(fields: [actorId], references: [id])
+
+  @@map("request_events")
+}
+
+model RequestAttachment {
+  id        Int    @id @default(autoincrement())
+  requestId String @db.VarChar(50)
+  name      String @db.VarChar(255)
+  size      String @db.VarChar(20)
+
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@map("request_attachments")
+}
+
+model AuditLog {
+  id     Int          @id @default(autoincrement())
+  time   DateTime     @default(now())
+  actor  String       @db.VarChar(100)
+  action String       @db.VarChar(255)
+  target String       @db.VarChar(255)
+  detail String       @db.Text
+  cat    AuditCategory
+
+  @@map("audit_log")
+}

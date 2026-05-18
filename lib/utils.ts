@@ -28,13 +28,6 @@ export function fmtRelative(iso: string | null | undefined): string {
   return fmtDate(iso)
 }
 
-export function daysFromNow(iso: string | null | undefined): number {
-  if (!iso) return 0
-  const now = new Date(); now.setHours(0, 0, 0, 0)
-  const due = new Date(iso); due.setHours(0, 0, 0, 0)
-  return Math.round((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-}
-
 /* ── Status ──────────────────────────────────────── */
 export const TERMINAL_STATUSES: RequestStatus[] = ['completed', 'rejected']
 

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react'
 import type { AppStore, User, Department, Request, RequestStatus, RequestPriority, ToastItem, AuditEntry } from '@/lib/types'
 import { loadStore, saveStore } from '@/lib/store'
-import { genId, fmtDate, fullName } from '@/lib/utils'
+import { genId, fullName } from '@/lib/utils'
 
 interface AppContextType {
   store: AppStore

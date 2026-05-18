@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useApp } from '@/components/providers/AppProvider'
-import { ROLE_INFO, ROLE_ORDER, avatarInitials, deptById, fullName, formalName } from '@/lib/utils'
+import { ROLE_INFO, ROLE_ORDER, deptById, fullName, formalName } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 import type { Role, User, UserTitle } from '@/lib/types'

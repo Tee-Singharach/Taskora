@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
-import { PRIORITY_INFO, fmtDate, fmtRelative, deptById, statusBadgeClass, PRIORITY_ORDER, isOverdue, fullName, formalName } from '@/lib/utils'
+import { fmtDate, deptById, statusBadgeClass, PRIORITY_ORDER, fullName, formalName } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 import EmptyState from '@/components/ui/EmptyState'

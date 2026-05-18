@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
-import { STATUS_INFO, PRIORITY_INFO, fmtDate, fmtRelative, statusBadgeClass, deptById, fullName, formalName } from '@/lib/utils'
+import { STATUS_INFO, PRIORITY_INFO, fmtDate, statusBadgeClass, deptById, fullName, formalName } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 import type { RequestStatus, RequestPriority } from '@/lib/types'
