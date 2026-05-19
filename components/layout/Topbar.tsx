@@ -145,7 +145,11 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
       <div className="relative" ref={notifRef}>
         <button className="w-[34px] h-[34px] rounded-md border-none bg-transparent text-gray-500 flex items-center justify-center cursor-pointer transition-all hover:bg-gray-100 hover:text-gray-900 relative" onClick={() => setShowNotif(v => !v)} title="การแจ้งเตือน">
           <Icon name="bell" size={17}/>
-          {unread > 0 && <span className="absolute top-[7px] right-[8px] w-[7px] h-[7px] bg-red-500 rounded-full border-2 border-white"/>}
+          {unread > 0 && (
+            <span className="absolute -top-[4px] -right-[4px] min-w-[18px] h-[18px] px-[4px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white leading-none">
+              {unread > 99 ? '99+' : unread}
+            </span>
+          )}
         </button>
         {showNotif && (
           <div className="absolute top-[calc(100%+4px)] right-0 w-[320px] md:w-[360px] bg-white border border-gray-200 rounded-lg shadow-xl z-[150] overflow-hidden">

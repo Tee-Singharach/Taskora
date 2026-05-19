@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
 import { fmtDate, deptById, statusBadgeClass, PRIORITY_ORDER, fullName, formalName } from '@/lib/utils'
+import { canViewRequest } from '@/lib/access'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 import EmptyState from '@/components/ui/EmptyState'
@@ -29,7 +30,7 @@ export default function OfficerInboxPage() {
   }
 
   const pendingQueue = store.requests
-    .filter(r => r.status === 'open' && !r.assigneeId)
+    .filter(r => r.status === 'open' && !r.assigneeId && canViewRequest(currentUser, r))
     .sort((a, b) => (PRIORITY_ORDER[a.priority] ?? 9) - (PRIORITY_ORDER[b.priority] ?? 9))
 
   const assignedQueue = store.requests

@@ -7,6 +7,7 @@ import {
   STATUS_INFO, PRIORITY_INFO, ROLE_INFO, fmtDate, fmtRelative,
   statusBadgeClass, deptById, fullName, formalName,
 } from '@/lib/utils'
+import { canViewRequest, canApprove, canDelete, sameDeptOfficers } from '@/lib/access'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 import TakeModal from '@/components/requests/TakeModal'
@@ -33,7 +34,7 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
   const {
     store, currentUser,
     takeRequest, reassignRequest, changeStatus,
-    updateProgress,
+    updateProgress, deleteRequest,
     approveRequest, rejectRequest, addComment,
   } = useApp()
   const router = useRouter()
@@ -42,9 +43,11 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
 
   const request = store.requests.find(r => r.id === id)
 
-  const [modal, setModal]     = useState<ModalKind>(null)
-  const [comment, setComment] = useState('')
+  const [modal, setModal]           = useState<ModalKind>(null)
+  const [comment, setComment]       = useState('')
   const [highlightIdx, setHighlightIdx] = useState<number | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting]     = useState(false)
 
   const eventCount = request?.events.length ?? 0
   useEffect(() => {
@@ -72,23 +75,42 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
     )
   }
 
+  if (!canViewRequest(currentUser, request)) {
+    return (
+      <div className="p-7 max-w-[1400px] mx-auto">
+        <div className="text-center py-20">
+          <div className="text-[16px] font-semibold">ไม่มีสิทธิ์เข้าถึงคำร้องนี้</div>
+          <div className="text-[13px] text-gray-500 mt-1">คำร้องนี้ไม่ได้อยู่ในแผนกของคุณ</div>
+          <button className="px-4 py-2 mt-4 text-[13px] border rounded-md hover:bg-gray-50" onClick={() => router.push(backPath)}>← กลับรายการ</button>
+        </div>
+      </div>
+    )
+  }
+
   const requester = store.users.find(u => u.id === request.requesterId)
   const assignee  = store.users.find(u => u.id === request.assigneeId)
   const approver  = store.users.find(u => u.id === request.approverId)
-  const officers  = store.users.filter(u => ['officer','manager','admin'].includes(u.role))
+  const officers  = sameDeptOfficers(store.users, request.department)
 
   const now = Date.now()
   const overdue = new Date(request.dueAt).getTime() < now && !['completed','rejected'].includes(request.status)
   const role = currentUser?.role ?? 'staff'
 
   const canOfficerAct = ['officer','admin'].includes(role)
-  const canManagerAct = ['manager','admin'].includes(role) && request.status === 'waiting_approval'
+  const canManagerAct = canApprove(currentUser, request)
   const canEdit = (currentUser?.id === request.requesterId && request.status === 'open') || role === 'admin'
+  const canDeleteThis = canDelete(currentUser, request)
 
   const currentWfIdx = WF_ORDER.indexOf(request.status)
   const isRejected = request.status === 'rejected'
 
   function closeModal() { setModal(null) }
+
+  async function handleDelete() {
+    setDeleting(true)
+    await deleteRequest(id)
+    router.push(backPath)
+  }
 
   function handleComment() {
     if (!comment.trim()) return
@@ -111,11 +133,18 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
           </div>
           <h1 className="text-[20px] font-semibold mt-2 leading-tight tracking-tight">{request.title}</h1>
         </div>
-        {canEdit && (
-          <button className="flex items-center gap-1.5 px-4 py-2 rounded-md border border-gray-200 text-[13px] font-medium text-gray-700 hover:bg-gray-50 flex-shrink-0" onClick={() => router.push(`/requests/${id}/edit${from ? `?from=${encodeURIComponent(from)}` : ''}`)}>
-            <Icon name="edit" size={14}/> แก้ไข
-          </button>
-        )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {canEdit && (
+            <button className="flex items-center gap-1.5 px-4 py-2 rounded-md border border-gray-200 text-[13px] font-medium text-gray-700 hover:bg-gray-50" onClick={() => router.push(`/requests/${id}/edit${from ? `?from=${encodeURIComponent(from)}` : ''}`)}>
+              <Icon name="edit" size={14}/> แก้ไข
+            </button>
+          )}
+          {canDeleteThis && (
+            <button className="flex items-center gap-1.5 px-4 py-2 rounded-md border border-red-200 text-[13px] font-medium text-red-600 hover:bg-red-50" onClick={() => setConfirmDelete(true)}>
+              <Icon name="trash-2" size={14}/> ลบ
+            </button>
+          )}
+        </div>
       </div>
 
       {!isRejected && (
@@ -195,7 +224,10 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
                     <Icon name="paperclip" size={14} className="text-gray-400"/>
                     <span className="flex-1 truncate text-gray-900">{a.name}</span>
                     <span className="text-[11px] text-gray-400 font-mono">{a.size}</span>
-                    <button className="text-gray-500 hover:text-indigo-600"><Icon name="download" size={13}/></button>
+                    {a.url
+                      ? <a href={a.url} download={a.name} className="text-indigo-600 hover:text-indigo-800 transition-colors"><Icon name="download" size={13}/></a>
+                      : <span className="text-gray-300 cursor-not-allowed"><Icon name="download" size={13}/></span>
+                    }
                   </div>
                 ))}
               </div>
@@ -352,6 +384,30 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
           onClose={closeModal}
           onConfirm={status => { changeStatus(id, status, ''); closeModal() }}
         />
+      )}
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[400px] overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-100">
+              <div className="text-[16px] font-semibold text-gray-900">ยืนยันการลบคำร้อง</div>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-[14px] text-gray-600 leading-relaxed">
+                คำร้อง <span className="font-semibold text-gray-900">"{request.title}"</span> จะถูกซ่อนออกจากระบบ
+              </p>
+              <p className="text-[12px] text-gray-400 mt-2">ข้อมูลยังคงอยู่ในฐานข้อมูลและสามารถตรวจสอบได้จาก Audit Log</p>
+            </div>
+            <div className="px-6 py-4 bg-gray-50 flex justify-end gap-2">
+              <button className="px-4 py-2 text-[13px] rounded-md border border-gray-200 hover:bg-white" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+                ยกเลิก
+              </button>
+              <button className="px-4 py-2 text-[13px] rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-60" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'กำลังลบ...' : 'ยืนยันลบ'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

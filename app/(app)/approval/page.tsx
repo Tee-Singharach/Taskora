@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
 import { PRIORITY_INFO, fmtDate, fmtRelative, deptById, fullName, formalName } from '@/lib/utils'
+import { canApprove } from '@/lib/access'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 
@@ -14,7 +15,7 @@ export default function ApprovalPage() {
   const [confirmKind, setConfirmKind] = useState<'approve' | 'reject'>('approve')
   const [note, setNote] = useState('')
 
-  if (currentUser?.role !== 'manager') {
+  if (currentUser?.role !== 'manager' && currentUser?.role !== 'admin') {
     return (
       <div className="page">
         <div className="empty" style={{ paddingTop: 80 }}>
@@ -26,8 +27,8 @@ export default function ApprovalPage() {
     )
   }
 
-  const queue = [...store.requests]
-    .filter(r => r.status === 'waiting_approval')
+  const queue = store.requests
+    .filter(r => canApprove(currentUser, r))
     .sort((a, b) => {
       const order: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 }
       return (order[a.priority] ?? 9) - (order[b.priority] ?? 9)

@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
 import { STATUS_INFO, PRIORITY_INFO, fmtDate, statusBadgeClass, deptById, fullName, formalName } from '@/lib/utils'
+import { visibleRequests } from '@/lib/access'
 import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 import type { RequestStatus, RequestPriority } from '@/lib/types'
@@ -29,12 +30,10 @@ export default function RequestsPage() {
 
   const priorityOrder: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 }
 
-  const filtered = useMemo(() => {
-    let list = [...store.requests]
+  const scoped = useMemo(() => visibleRequests(currentUser, store.requests), [currentUser, store.requests])
 
-    if (currentUser?.role === 'staff') {
-      list = list.filter(r => r.requesterId === store.currentUserId)
-    }
+  const filtered = useMemo(() => {
+    let list = [...scoped]
 
     if (statusFilter !== 'all') list = list.filter(r => r.status === statusFilter)
     if (deptFilter !== 'all')   list = list.filter(r => r.department === deptFilter)
@@ -55,7 +54,7 @@ export default function RequestsPage() {
     })
 
     return list
-  }, [store.requests, store.currentUserId, currentUser, statusFilter, deptFilter, priorityFilter, search, sortBy])
+  }, [scoped, statusFilter, deptFilter, priorityFilter, search, sortBy])
 
   const now = Date.now()
 
@@ -64,7 +63,7 @@ export default function RequestsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-[22px] font-semibold tracking-tighter m-0">
-            {currentUser?.role === 'staff' ? 'คำร้องของฉัน' : 'คำร้องทั้งหมด'}
+            {currentUser?.role === 'admin' ? 'คำร้องทั้งหมด' : currentUser?.role === 'staff' ? 'คำร้องของฉัน' : 'คำร้องในแผนก'}
           </h1>
           <div className="text-[13px] text-gray-500 mt-1">{filtered.length} รายการ</div>
         </div>
@@ -87,7 +86,7 @@ export default function RequestsPage() {
               {p.label}
               {p.value !== 'all' && (
                 <span className="text-[11px] opacity-70 ml-1.5">
-                  {store.requests.filter(r => r.status === p.value).length}
+                  {scoped.filter(r => r.status === p.value).length}
                 </span>
               )}
             </button>

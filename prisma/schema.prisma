@@ -52,6 +52,14 @@ enum AuditCategory {
   system
 }
 
+enum RequestType {
+  repair
+  budget
+  equipment
+  staffing
+  general
+}
+
 model Department {
   id       String    @id @db.VarChar(50)
   name     String    @db.VarChar(100)
@@ -85,6 +93,7 @@ model Request {
   id          String          @id @db.VarChar(50)
   title       String          @db.VarChar(255)
   description String          @db.Text
+  type        RequestType     @default(general)
   priority    RequestPriority @default(normal)
   status      RequestStatus   @default(open)
   progress    Int             @default(0) @db.TinyInt
@@ -95,6 +104,7 @@ model Request {
   assigneeId  String?   @db.VarChar(50)
   approverId  String    @db.VarChar(50)
   department  String    @db.VarChar(50)
+  deletedAt   DateTime?
 
   requester    User        @relation("requester", fields: [requesterId], references: [id])
   assignee     User?       @relation("assignee", fields: [assigneeId], references: [id])
@@ -125,6 +135,7 @@ model RequestAttachment {
   requestId String @db.VarChar(50)
   name      String @db.VarChar(255)
   size      String @db.VarChar(20)
+  url       String @default("") @db.VarChar(500)
 
   request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
 

@@ -8,10 +8,11 @@ export interface Department {
 }
 export type RequestStatus = 'open' | 'in_progress' | 'waiting_approval' | 'completed' | 'rejected'
 export type RequestPriority = 'low' | 'normal' | 'high' | 'urgent'
+export type RequestType = 'repair' | 'budget' | 'equipment' | 'staffing' | 'general'
 export type AuditCategory = 'workflow' | 'user' | 'security' | 'system'
 export type EventKind = 'system' | 'comment' | 'approve' | 'reject'
 
-export type UserTitle = 'นาย' | 'นาง' | 'นางสาว' | 'ดร.' | 'รศ.' | 'ศ.'
+export type UserTitle = 'นาย' | 'นาง' | 'นางสาว' | 'ดร' | 'รศ' | 'ศ'
 
 export interface User {
   id: string
@@ -33,6 +34,7 @@ export interface RequestEvent {
 export interface RequestAttachment {
   name: string
   size: string
+  url?: string
 }
 
 export interface Request {
@@ -40,6 +42,7 @@ export interface Request {
   title: string
   description: string
   department: string
+  type: RequestType
   priority: RequestPriority
   status: RequestStatus
   progress: number

@@ -8,7 +8,8 @@ import Avatar from '@/components/ui/Avatar'
 import { ROLE_INFO, deptById, fullName, formalName } from '@/lib/utils'
 import type { UserTitle } from '@/lib/types'
 
-const TITLES: UserTitle[] = ['นาย', 'นาง', 'นางสาว', 'ดร.', 'รศ.', 'ศ.']
+const TITLES: UserTitle[] = ['นาย', 'นาง', 'นางสาว', 'ดร', 'รศ', 'ศ']
+const TITLE_DISPLAY: Record<UserTitle, string> = { 'นาย': 'นาย', 'นาง': 'นาง', 'นางสาว': 'นางสาว', 'ดร': 'ดร.', 'รศ': 'รศ.', 'ศ': 'ศ.' }
 
 export default function SettingsPage() {
   const { store, currentUser, showToast, updateUser } = useApp()
@@ -113,7 +114,7 @@ export default function SettingsPage() {
                   onChange={e => setEditTitle(e.target.value as UserTitle)}
                   className="w-full bg-white border border-gray-200 rounded-lg py-2.5 px-4 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
                 >
-                  {TITLES.map(t => <option key={t} value={t}>{t}</option>)}
+                  {TITLES.map(t => <option key={t} value={t}>{TITLE_DISPLAY[t]}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">

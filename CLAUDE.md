@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Taskora** is a Thai-language internal request management system built with Next.js 16, React 19, and TypeScript. Users file requests that flow through staff → officer → manager approval.
 
-The app currently runs entirely on **localStorage** (no backend wired up yet). A MySQL database has been provisioned and seeded via Prisma, and the next planned step is to migrate `AppProvider` from localStorage to Server Actions backed by Prisma. Until that migration lands, localStorage is still the live data path.
+Data is persisted in **MySQL via Prisma**. The client talks to the DB exclusively through Server Actions in `app/actions.ts`; there is no localStorage data path anymore (`lib/store.ts` was removed). The only client-persisted state is the impersonated `currentUserId` (no real auth yet) and notification read-state, both in localStorage.
 
 ## Development Commands
 
@@ -47,33 +47,46 @@ Prisma 7 differs sharply from 6 and earlier — most online examples are wrong f
 
 ### State Management (the most important thing to understand)
 
-All application state is managed by `components/providers/AppProvider.tsx`, a client component that wraps the entire `(app)` route group. It:
-- Loads from / saves to **localStorage** (`taskora_store`, schema version 4 — see `lib/store.ts`)
-- Exposes every mutation as a named function via React Context (`useApp()`)
-- **Pages never mutate store directly** — always call the provider functions
+`components/providers/AppProvider.tsx` (client component wrapping the `(app)` route group) is the single data seam. The flow is:
 
-When the localStorage `schemaVersion` doesn't match `SCHEMA_VERSION` in `lib/store.ts`, the store resets to `lib/mockData.ts`. Bump `SCHEMA_VERSION` whenever the `AppStore` shape changes.
+- On mount it calls `getStore()` (Server Action) once and holds the whole store (`users`, `departments`, `requests`, `auditLog`) in React state.
+- Every mutation in `useApp()` is a thin wrapper that calls the matching Server Action in `app/actions.ts`, then **refetches `getStore()`** and replaces local state (a `run()` helper does call → refetch → toast, with an error toast on failure). There is no optimistic update.
+- **Pages never mutate or fetch directly** — they read `store.*` and call the provider functions. Keep it that way; adding a new mutation means: add a Server Action, add a wrapper in `AppProvider`, expose it on the context type.
+- `currentUserId` is **not** server state — it is impersonation, kept in React state and mirrored to `localStorage` (`taskora_uid`). `setCurrentUserId` (used by the login page) just swaps it.
 
-`AppProvider` is the single seam for the planned backend migration: every page already goes through `useApp()`, so swapping the localStorage internals for Server Actions touches only this file plus the new server layer — no page changes.
+Mutation wrappers are `async` and most pages fire-and-forget them; `addRequest` is the exception — it returns the created `Request` (used by `requests/new` to navigate), so its call site must `await`.
 
 ### Data Layer
 
-`lib/types.ts` is the hand-written source of truth for UI-facing data shapes (`User`, `Request` with embedded `events[]`/`attachments[]`, `AppStore`). `prisma/schema.prisma` mirrors these into relational tables (the embedded arrays become `request_events` / `request_attachments`). `lib/mockData.ts` is both the localStorage seed and the Prisma seed source.
+`lib/types.ts` is the hand-written source of truth for UI-facing data shapes (`User`, `Request` with embedded `events[]`/`attachments[]`, `AppStore`). `prisma/schema.prisma` mirrors these into relational tables — the embedded arrays become the `request_events` / `request_attachments` tables, and `app/actions.ts#getStore` re-assembles them back into the embedded shape (and converts `Date` → ISO strings) so the UI types are unchanged. `lib/mockData.ts` is the Prisma seed source (`prisma/seed.ts`).
+
+A `Request` has a `type` (`RequestType`: `repair | budget | equipment | staffing | general`) for classification; Thai labels for it live in `REQUEST_TYPE_INFO` in `lib/utils.ts` (same pattern as `STATUS_INFO` / `PRIORITY_INFO`). Any new enum on a model means: edit `schema.prisma` **and** `lib/types.ts`, then `npx prisma db push && npx prisma generate`, update `mockData.ts`, and reseed.
+
+### Notifications
+
+`components/layout/Topbar.tsx` derives the bell dropdown entirely from `store.requests` events at render time (no notification table): for the current user it surfaces events on requests they're involved in, excluding their own actions. Read-state is per-item, persisted as a key array in `localStorage` (`taskora_notif_read`). Clicking an item routes to `/requests/{id}?from=…&ev={idx}`; the detail page reads `ev` and scrolls to / briefly highlights that event.
 
 ### Routing & Layouts
 
 The `(app)` route group (`app/(app)/`) shares the authenticated shell (`layout.tsx` → Sidebar + Topbar). `login` and the root redirect live outside it. Routes: `dashboard`, `requests` (list, `[id]`, `[id]/edit`, `new`), `approval`, `officer/inbox`, `admin/{users,departments,audit}`, `settings`.
 
-### Role-Based Access
+### Access Control (department-based — `lib/access.ts` is the single source of truth)
 
-Four roles drive navigation and capabilities. Sidebar nav is generated per role in `components/layout/Sidebar.tsx`.
+**Never inline an access rule.** All visibility/approval decisions go through `lib/access.ts`; pages and Server Actions both import from it. Adding/altering a rule = edit this one file.
 
-| Role | Thai | Can do |
+A request's `department` is the **destination** department that handles it (the requester picks it on the new-request form — it is *not* the requester's own dept). Routing & scope follow that field:
+
+| Role | Sees (`canViewRequest`) | Approves (`canApprove`) |
 |---|---|---|
-| `staff` | พนักงาน | Create & track own requests |
-| `officer` | เจ้าหน้าที่ | Take, reassign, update progress |
-| `manager` | หัวหน้างาน | Approve/reject, view dashboard |
-| `admin` | ผู้ดูแลระบบ | Manage users, departments, audit log |
+| `staff` | only requests they filed | — |
+| `officer` | requests routed to their dept | — |
+| `manager` | requests routed to their dept | only if `r.approverId === me` **and** `r.department === my dept` and status `waiting_approval` |
+| `admin` | everything | any `waiting_approval` |
+
+- **Approver is dynamic**: at creation `approverId = deptApprover(users, destDept)` (the manager whose `dept` matches). Seed data guarantees every department has exactly one manager — keep it that way or routing breaks.
+- **Approval is enforced server-side too**: `app/actions.ts#assertCanApprove` re-checks `canApprove` before `approveRequest`/`rejectRequest` mutate — the UI gate is not trusted alone.
+- Officer reassignment is limited to `sameDeptOfficers(users, request.department)`.
+- Sidebar nav is still generated per role in `components/layout/Sidebar.tsx`.
 
 ### Modals
 

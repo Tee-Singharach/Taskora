@@ -1,4 +1,4 @@
-import type { User, RequestStatus, RequestPriority, Role, Request, Department } from './types'
+import type { User, RequestStatus, RequestPriority, RequestType, Role, Request, Department } from './types'
 
 /* ── Date helpers ────────────────────────────────── */
 const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
@@ -71,6 +71,14 @@ export const PRIORITY_INFO: Record<RequestPriority, { label: string; color: stri
   urgent: { label: 'เร่งด่วน', color: 'rose' },
 }
 
+export const REQUEST_TYPE_INFO: Record<RequestType, { label: string }> = {
+  repair:    { label: 'แจ้งซ่อม/แก้ไข' },
+  budget:    { label: 'ขออนุมัติงบประมาณ' },
+  equipment: { label: 'เบิก/จัดซื้ออุปกรณ์' },
+  staffing:  { label: 'บุคลากร/กำลังคน' },
+  general:   { label: 'ทั่วไป' },
+}
+
 export function priorityBadgeClass(priority: RequestPriority): string {
   const color = PRIORITY_INFO[priority].color
   return color === 'rose'
@@ -108,7 +116,8 @@ export function fullName(user: Pick<User, 'firstName' | 'lastName'>): string {
 }
 
 export function formalName(user: Pick<User, 'title' | 'firstName' | 'lastName'>): string {
-  return `${user.title}${user.firstName} ${user.lastName}`
+  const dot = ['ดร', 'รศ', 'ศ'].includes(user.title) ? '.' : ''
+  return `${user.title}${dot}${user.firstName} ${user.lastName}`
 }
 
 /* ── Avatar color ────────────────────────────────── */

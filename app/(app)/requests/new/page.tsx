@@ -4,7 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
 import Icon from '@/components/ui/Icon'
-import type { RequestPriority } from '@/lib/types'
+import { deptApprover } from '@/lib/access'
+import { REQUEST_TYPE_INFO } from '@/lib/utils'
+import type { RequestPriority, RequestType } from '@/lib/types'
 
 export default function NewRequestPage() {
   const { addRequest, store, showToast } = useApp()
@@ -23,11 +25,10 @@ export default function NewRequestPage() {
     return null
   }
 
-  const firstManager = store.users.find(u => u.role === 'manager')
-
   const [form, setForm] = useState({
     title: '',
     description: '',
+    type: 'general' as RequestType,
     priority: 'normal' as RequestPriority,
     department: currentUser?.dept ?? departments[0]?.id ?? '',
     dueAt: '',
@@ -65,21 +66,36 @@ export default function NewRequestPage() {
     if (saving) return
     setSaving(true)
     try {
+      const uploaded = await Promise.all(
+        form.attachments.map(async (f) => {
+          const fd = new FormData()
+          fd.append('file', f)
+          const res = await fetch('/api/upload', { method: 'POST', body: fd })
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}))
+            throw new Error(`อัปโหลด "${f.name}" ล้มเหลว: ${body.error ?? res.status}`)
+          }
+          return res.json() as Promise<{ name: string; size: string; url: string }>
+        })
+      )
       const req = await addRequest({
         title: form.title.trim(),
         description: form.description.trim(),
         department: form.department,
+        type: form.type,
         priority: form.priority,
         status: 'open',
         progress: 0,
         requesterId: store.currentUserId,
         assigneeId: null,
-        approverId: firstManager?.id ?? store.currentUserId,
+        approverId: deptApprover(store.users, form.department)?.id ?? store.currentUserId,
         dueAt: form.dueAt || new Date(Date.now() + 14 * 86400000).toISOString(),
-        attachments: form.attachments.map(f => ({ name: f.name, size: `${(f.size / 1024).toFixed(1)} KB` })),
+        attachments: uploaded,
       })
       showToast('success', 'ยื่นคำร้องเรียบร้อยแล้ว')
       router.push(`/requests/${req.id}`)
+    } catch (err) {
+      showToast('error', err instanceof Error ? err.message : 'เกิดข้อผิดพลาด')
     } finally {
       setSaving(false)
     }
@@ -122,6 +138,16 @@ export default function NewRequestPage() {
             {errors.description && <div className="text-[11px] text-red-500">{errors.description}</div>}
           </div>
 
+          {/* Type */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[12px] font-medium text-gray-500">ประเภทคำร้อง</label>
+            <select className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500" value={form.type} onChange={e => set('type', e.target.value as RequestType)}>
+              {(Object.keys(REQUEST_TYPE_INFO) as RequestType[]).map(t => (
+                <option key={t} value={t}>{REQUEST_TYPE_INFO[t].label}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Priority + Dept */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
@@ -134,7 +160,7 @@ export default function NewRequestPage() {
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[12px] font-medium text-gray-500">ฝ่าย / แผนก</label>
+              <label className="text-[12px] font-medium text-gray-500">ส่งไปยังแผนก <span className="text-red-500">*</span></label>
               <select className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500" value={form.department} onChange={e => set('department', e.target.value)}>
                 {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>

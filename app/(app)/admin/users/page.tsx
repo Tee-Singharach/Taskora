@@ -7,7 +7,8 @@ import Icon from '@/components/ui/Icon'
 import Avatar from '@/components/ui/Avatar'
 import type { Role, User, UserTitle } from '@/lib/types'
 
-const TITLES: UserTitle[] = ['นาย', 'นาง', 'นางสาว', 'ดร.', 'รศ.', 'ศ.']
+const TITLES: UserTitle[] = ['นาย', 'นาง', 'นางสาว', 'ดร', 'รศ', 'ศ']
+const TITLE_DISPLAY: Record<UserTitle, string> = { 'นาย': 'นาย', 'นาง': 'นาง', 'นางสาว': 'นางสาว', 'ดร': 'ดร.', 'รศ': 'รศ.', 'ศ': 'ศ.' }
 
 interface UserForm {
   title: UserTitle
@@ -271,7 +272,7 @@ export default function AdminUsersPage() {
                 <label className="text-[12px] font-medium text-gray-500">คำนำหน้า <span className="text-red-500">*</span></label>
                 <select className="w-full bg-white border border-gray-200 rounded-md p-2 text-[14px] outline-none focus:border-indigo-500" value={form.title}
                   onChange={e => setForm(p => ({ ...p, title: e.target.value as UserTitle }))}>
-                  {TITLES.map(t => <option key={t} value={t}>{t}</option>)}
+                  {TITLES.map(t => <option key={t} value={t}>{TITLE_DISPLAY[t]}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">

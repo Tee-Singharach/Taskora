@@ -9,7 +9,8 @@
       "Bash(npm run *)",
       "PowerShell(Get-Process *)",
       "Bash(taskkill *)",
-      "PowerShell(Stop-Process *)"
+      "PowerShell(Stop-Process *)",
+      "Bash(npx prisma *)"
     ]
   }
 }

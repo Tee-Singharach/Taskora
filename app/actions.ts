@@ -1,6 +1,7 @@
 'use server'
 
 import { db } from '@/lib/db'
+import { canApprove } from '@/lib/access'
 import type {
   AppStore, User, Department, Request, RequestStatus, RequestPriority,
 } from '@/lib/types'
@@ -15,6 +16,7 @@ type RequestRow = Awaited<ReturnType<typeof loadRequestRows>>[number]
 
 function loadRequestRows() {
   return db.request.findMany({
+    where: { deletedAt: null },
     include: { events: { orderBy: { id: 'asc' } }, attachments: true },
     orderBy: { createdAt: 'asc' },
   })
@@ -26,6 +28,7 @@ function mapRequest(r: RequestRow): Request {
     title: r.title,
     description: r.description,
     department: r.department,
+    type: r.type as Request['type'],
     priority: r.priority as RequestPriority,
     status: r.status as RequestStatus,
     progress: r.progress,
@@ -34,7 +37,7 @@ function mapRequest(r: RequestRow): Request {
     approverId: r.approverId,
     createdAt: r.createdAt.toISOString(),
     dueAt: r.dueAt.toISOString(),
-    attachments: r.attachments.map(a => ({ name: a.name, size: a.size })),
+    attachments: r.attachments.map(a => ({ name: a.name, size: a.size, url: a.url || undefined })),
     events: r.events.map(e => ({
       kind: e.kind as EventKind,
       actorId: e.actorId,
@@ -105,6 +108,7 @@ export async function createRequest(data: NewRequest, actorId: string): Promise<
       title: data.title,
       description: data.description,
       department: data.department,
+      type: data.type,
       priority: data.priority,
       status: data.status,
       progress: data.progress,
@@ -112,7 +116,7 @@ export async function createRequest(data: NewRequest, actorId: string): Promise<
       assigneeId: data.assigneeId,
       approverId: data.approverId,
       dueAt: new Date(data.dueAt),
-      attachments: { create: data.attachments.map(a => ({ name: a.name, size: a.size })) },
+      attachments: { create: data.attachments.map(a => ({ name: a.name, size: a.size, url: a.url ?? '' })) },
       events: {
         create: [{ kind: 'system', actorId: data.requesterId, time: new Date(), msg: 'สร้างคำร้องและส่งเข้าระบบ' }],
       },
@@ -128,7 +132,7 @@ export async function createRequest(data: NewRequest, actorId: string): Promise<
 
 export async function editRequest(
   id: string,
-  patch: Partial<Pick<Request, 'title' | 'description' | 'department' | 'priority' | 'dueAt' | 'attachments'>>,
+  patch: Partial<Pick<Request, 'title' | 'description' | 'type' | 'department' | 'priority' | 'dueAt' | 'attachments'>>,
 ) {
   const { attachments, dueAt, ...rest } = patch
   await db.request.update({
@@ -137,7 +141,7 @@ export async function editRequest(
       ...rest,
       ...(dueAt ? { dueAt: new Date(dueAt) } : {}),
       ...(attachments
-        ? { attachments: { deleteMany: {}, create: attachments.map(a => ({ name: a.name, size: a.size })) } }
+        ? { attachments: { deleteMany: {}, create: attachments.map(a => ({ name: a.name, size: a.size, url: a.url ?? '' })) } }
         : {}),
     },
   })
@@ -175,16 +179,35 @@ export async function submitForApproval(id: string, actorId: string) {
   await pushAudit(actorId, 'ส่งอนุมัติ', id, 'รออนุมัติ', 'workflow')
 }
 
+/** Server-side guard: only the request's designated department approver (or admin) may act. */
+async function assertCanApprove(id: string, actorId: string) {
+  const [req, actor] = await Promise.all([
+    db.request.findUnique({ where: { id } }),
+    db.user.findUnique({ where: { id: actorId } }),
+  ])
+  if (!req || !actor) throw new Error('ไม่พบคำร้องหรือผู้ใช้')
+  if (!canApprove(actor as unknown as User, req as unknown as Request)) {
+    throw new Error('ไม่มีสิทธิ์อนุมัติ/ปฏิเสธคำร้องนี้')
+  }
+}
+
 export async function approveRequest(id: string, actorId: string, note: string) {
+  await assertCanApprove(id, actorId)
   await db.request.update({ where: { id }, data: { status: 'completed', progress: 100 } })
   await addEvent(id, 'approve', actorId, note || 'อนุมัติเรียบร้อย')
   await pushAudit(actorId, 'อนุมัติคำร้อง', id, note || 'อนุมัติ', 'workflow')
 }
 
 export async function rejectRequest(id: string, actorId: string, note: string) {
+  await assertCanApprove(id, actorId)
   await db.request.update({ where: { id }, data: { status: 'rejected' } })
   await addEvent(id, 'reject', actorId, note)
   await pushAudit(actorId, 'ปฏิเสธคำร้อง', id, note, 'workflow')
+}
+
+export async function deleteRequest(id: string, actorId: string) {
+  await db.request.update({ where: { id }, data: { deletedAt: new Date() } })
+  await pushAudit(actorId, 'ลบคำร้อง (soft delete)', id, '', 'workflow')
 }
 
 export async function addComment(id: string, actorId: string, msg: string) {

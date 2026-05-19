@@ -11,7 +11,7 @@ interface AppContextType {
   loading: boolean
   setCurrentUserId: (id: string) => void
   addRequest: (data: Omit<Request, 'id' | 'createdAt' | 'events'>) => Promise<Request>
-  updateRequest: (id: string, patch: Partial<Pick<Request, 'title' | 'description' | 'department' | 'priority' | 'dueAt' | 'attachments'>>) => Promise<void>
+  updateRequest: (id: string, patch: Partial<Pick<Request, 'title' | 'description' | 'type' | 'department' | 'priority' | 'dueAt' | 'attachments'>>) => Promise<void>
   takeRequest: (id: string) => Promise<void>
   reassignRequest: (id: string, assigneeId: string, note: string) => Promise<void>
   changeStatus: (id: string, status: RequestStatus, note: string) => Promise<void>
@@ -19,6 +19,7 @@ interface AppContextType {
   submitForApproval: (id: string) => Promise<void>
   approveRequest: (id: string, note: string) => Promise<void>
   rejectRequest: (id: string, note: string) => Promise<void>
+  deleteRequest: (id: string) => Promise<void>
   addComment: (id: string, msg: string) => Promise<void>
   addUser: (data: Omit<User, 'id'>) => Promise<void>
   updateUser: (id: string, patch: Partial<User>) => Promise<void>
@@ -91,7 +92,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return req
   }, [store.currentUserId, refresh])
 
-  const updateRequest = useCallback((id: string, patch: Partial<Pick<Request, 'title' | 'description' | 'department' | 'priority' | 'dueAt' | 'attachments'>>) =>
+  const updateRequest = useCallback((id: string, patch: Partial<Pick<Request, 'title' | 'description' | 'type' | 'department' | 'priority' | 'dueAt' | 'attachments'>>) =>
     run(() => api.editRequest(id, patch), 'บันทึกการแก้ไขเรียบร้อย'), [run])
 
   const takeRequest = useCallback((id: string) =>
@@ -114,6 +115,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const rejectRequest = useCallback((id: string, note: string) =>
     run(() => api.rejectRequest(id, store.currentUserId, note), 'ปฏิเสธคำร้องแล้ว', 'warning'), [run, store.currentUserId])
+
+  const deleteRequest = useCallback((id: string) =>
+    run(() => api.deleteRequest(id, store.currentUserId), 'ลบคำร้องแล้ว', 'warning'), [run, store.currentUserId])
 
   const addComment = useCallback((id: string, msg: string) =>
     run(() => api.addComment(id, store.currentUserId, msg), 'เพิ่มความคิดเห็นแล้ว'), [run, store.currentUserId])
@@ -141,7 +145,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider value={{
       store, currentUser, loading, setCurrentUserId,
-      addRequest, updateRequest, takeRequest, reassignRequest,
+      addRequest, updateRequest, deleteRequest, takeRequest, reassignRequest,
       changeStatus, updateProgress, submitForApproval,
       approveRequest, rejectRequest, addComment,
       addUser, updateUser, deleteUser,

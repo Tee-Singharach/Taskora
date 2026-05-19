@@ -3,14 +3,17 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
-import { STATUS_INFO, fmtDate, statusBadgeClass, fullName } from '@/lib/utils'
+import { STATUS_INFO, REQUEST_TYPE_INFO, fmtDate, statusBadgeClass, fullName } from '@/lib/utils'
+import { visibleRequests } from '@/lib/access'
+import type { RequestType } from '@/lib/types'
 import Avatar from '@/components/ui/Avatar'
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 export default function DashboardPage() {
   const { store, currentUser } = useApp()
   const router = useRouter()
-  const { requests, users } = store
+  const { users } = store
+  const requests = visibleRequests(currentUser, store.requests)
   const [chartPeriod, setChartPeriod] = useState<'7d' | '1m'>('7d')
 
   const now = Date.now()
@@ -40,36 +43,32 @@ export default function DashboardPage() {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 5)
 
-  const last7Days: Array<{ date: string; created: number; completed: number }> = [
-    { date: 'พ.ค. 10', created: 2, completed: 1 },
-    { date: 'พ.ค. 11', created: 3, completed: 2 },
-    { date: 'พ.ค. 12', created: 2, completed: 2 },
-    { date: 'พ.ค. 13', created: 1, completed: 1 },
-    { date: 'พ.ค. 14', created: 2, completed: 2 },
-    { date: 'พ.ค. 15', created: 3, completed: 1 },
-    { date: 'พ.ค. 16', created: 2, completed: 2 },
-  ]
+  function buildChartData(days: number) {
+    const result: Array<{ date: string; created: number; completed: number }> = []
+    const today = new Date()
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(today)
+      d.setDate(d.getDate() - i)
+      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+      const dayEnd = dayStart + 86400000
+      const label = d.toLocaleDateString('th-TH', { month: 'short', day: 'numeric' })
+      const created = requests.filter(r => {
+        const t = new Date(r.createdAt).getTime()
+        return t >= dayStart && t < dayEnd
+      }).length
+      const completed = requests.filter(r => {
+        if (r.status !== 'completed') return false
+        const lastEv = [...r.events].reverse().find(e => e.kind === 'approve' || e.kind === 'system')
+        if (!lastEv) return false
+        const t = new Date(lastEv.time).getTime()
+        return t >= dayStart && t < dayEnd
+      }).length
+      result.push({ date: label, created, completed })
+    }
+    return result
+  }
 
-  const last30Days: Array<{ date: string; created: number; completed: number }> = [
-    { date: 'พ.ค. 17', created: 2, completed: 1 },
-    { date: 'พ.ค. 18', created: 3, completed: 2 },
-    { date: 'พ.ค. 19', created: 2, completed: 2 },
-    { date: 'พ.ค. 20', created: 1, completed: 1 },
-    { date: 'พ.ค. 21', created: 2, completed: 2 },
-    { date: 'พ.ค. 22', created: 3, completed: 1 },
-    { date: 'พ.ค. 23', created: 2, completed: 2 },
-    { date: 'พ.ค. 24', created: 2, completed: 1 },
-    { date: 'พ.ค. 25', created: 3, completed: 2 },
-    { date: 'พ.ค. 26', created: 2, completed: 2 },
-    { date: 'พ.ค. 27', created: 1, completed: 1 },
-    { date: 'พ.ค. 28', created: 2, completed: 2 },
-    { date: 'พ.ค. 29', created: 3, completed: 1 },
-    { date: 'พ.ค. 30', created: 2, completed: 2 },
-    { date: 'มิ.ย. 1', created: 2, completed: 1 },
-    { date: 'มิ.ย. 2', created: 3, completed: 2 },
-  ]
-
-  const chartData = chartPeriod === '7d' ? last7Days : last30Days
+  const chartData = buildChartData(chartPeriod === '7d' ? 7 : 30)
   const totalCreated = chartData.reduce((sum, d) => sum + d.created, 0)
   const totalCompleted = chartData.reduce((sum, d) => sum + d.completed, 0)
 
@@ -82,33 +81,26 @@ export default function DashboardPage() {
     { name: STATUS_INFO.rejected.label, value: requests.filter(r => r.status === 'rejected').length, fill: '#EF4444' },
   ].filter(d => d.value > 0)
 
-  // Department workload
-  // Color mapping for departments
-  const deptColorMap: Record<string, string> = {
-    indigo: '#4F46E5',
-    rose: '#F43F5E',
-    emerald: '#10B981',
-    amber: '#F59E0B',
-    violet: '#A78BFA',
-    slate: '#64748B',
+  const typeColorMap: Record<RequestType, string> = {
+    repair:    '#F43F5E',
+    budget:    '#10B981',
+    equipment: '#4F46E5',
+    staffing:  '#A78BFA',
+    general:   '#64748B',
   }
 
-  const deptStats = store.departments.map(dept => {
-    const deptRequests = requests.filter(r => r.department === dept.id)
-    const active = deptRequests.filter(r => !['completed','rejected'].includes(r.status)).length
-    const completed = deptRequests.filter(r => r.status === 'completed').length
-    const total = deptRequests.length
+  const typeStats = (Object.keys(REQUEST_TYPE_INFO) as RequestType[]).map(t => {
+    const list = requests.filter(r => r.type === t)
+    const active = list.filter(r => !['completed','rejected'].includes(r.status)).length
+    const total = list.length
     return {
-      id: dept.id,
-      name: dept.name,
-      short: dept.short,
-      color: deptColorMap[dept.color] || '#4F46E5',
+      id: t,
+      name: REQUEST_TYPE_INFO[t].label,
+      color: typeColorMap[t],
       total,
       active,
-      completed,
-      completion: total > 0 ? Math.round((completed / total) * 100) : 0,
     }
-  }).filter(d => d.total > 0).sort((a, b) => b.total - a.total)
+  }).filter(d => d.total > 0).sort((a, b) => b.active - a.active)
 
   return (
     <div className="p-4 lg:p-7 max-w-[1400px] mx-auto">
@@ -154,7 +146,7 @@ export default function DashboardPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} interval={chartPeriod === '7d' ? 0 : 4} />
                       <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px' }} />
                       <Bar dataKey="created" fill="#3B82F6" name="คำร้องใหม่" />
@@ -226,23 +218,25 @@ export default function DashboardPage() {
 
       {/* Department workload + Recent requests grid */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-6 mb-6">
-        {/* Department workload bars - Left */}
+        {/* Workload by request type - Left */}
         <div className="bg-white border border-gray-200 rounded-lg flex flex-col">
           <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
-            <h2 className="text-[15px] font-semibold text-gray-900 tracking-tighter m-0">ภาระงานรายแผนก</h2>
+            <h2 className="text-[15px] font-semibold text-gray-900 tracking-tighter m-0">ภาระงานตามประเภท</h2>
             <p className="text-[12px] text-gray-500 mt-1 m-0">คำร้องที่กำลังดำเนินการ</p>
           </div>
           <div className="p-6 space-y-4 flex-1 flex flex-col justify-start">
-            {deptStats.map(dept => (
-              <div key={dept.id} className="group">
+            {typeStats.length === 0 ? (
+              <div className="text-[12px] text-gray-400 text-center py-8">ยังไม่มีคำร้อง</div>
+            ) : typeStats.map(t => (
+              <div key={t.id} className="group">
                 <div className="flex items-center justify-between mb-2 text-[12px]">
-                  <span className="font-medium text-gray-900">{dept.name}</span>
-                  <span className="text-gray-500 font-medium">{dept.active}/{dept.total}</span>
+                  <span className="font-medium text-gray-900">{t.name}</span>
+                  <span className="text-gray-500 font-medium">{t.active}/{t.total}</span>
                 </div>
                 <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden shadow-sm">
                   <div
                     className="h-full rounded-full transition-all duration-300 group-hover:shadow-md"
-                    style={{ backgroundColor: dept.color, width: `${dept.total > 0 ? (dept.active / dept.total) * 100 : 0}%` }}
+                    style={{ backgroundColor: t.color, width: `${t.total > 0 ? (t.active / t.total) * 100 : 0}%` }}
                   />
                 </div>
               </div>
