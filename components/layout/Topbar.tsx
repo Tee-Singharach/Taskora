@@ -1,9 +1,19 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
+import { fmtRelative, formalName } from '@/lib/utils'
 import Icon from '@/components/ui/Icon'
+
+const NOTIF_READ_KEY = 'taskora_notif_read'
+
+const KIND_LABEL: Record<string, string> = {
+  comment: 'แสดงความคิดเห็นใหม่',
+  approve: 'อนุมัติคำร้อง',
+  reject:  'ปฏิเสธคำร้อง',
+  system:  'อัปเดตคำร้อง',
+}
 
 const BREADCRUMBS: Record<string, string[]> = {
   '/dashboard':       ['แดชบอร์ด'],
@@ -16,17 +26,68 @@ const BREADCRUMBS: Record<string, string[]> = {
 }
 
 export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
-  const { store } = useApp()
+  const { store, currentUser } = useApp()
   const [search, setSearch] = useState('')
   const [showNotif, setShowNotif] = useState(false)
+  const [readKeys, setReadKeys] = useState<string[]>([])
   const notifRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
   const router = useRouter()
 
-  const unread = 3
+  const me = currentUser?.id
+
+  const notifications = useMemo(() => {
+    if (!me) return []
+    const list: { key: string; reqId: string; evIdx: number; reqTitle: string; kind: string; actorName: string; time: string }[] = []
+    for (const r of store.requests) {
+      const involved = r.requesterId === me || r.assigneeId === me || r.approverId === me
+      if (!involved) continue
+      r.events.forEach((ev, idx) => {
+        if (ev.actorId === me) return
+        const actor = store.users.find(u => u.id === ev.actorId)
+        list.push({
+          key: `${r.id}-${idx}`,
+          reqId: r.id,
+          evIdx: idx,
+          reqTitle: r.title,
+          kind: ev.kind,
+          actorName: actor ? formalName(actor) : 'ระบบ',
+          time: ev.time,
+        })
+      })
+    }
+    return list.sort((a, b) => b.time.localeCompare(a.time)).slice(0, 15)
+  }, [store.requests, store.users, me])
+
+  const unread = useMemo(
+    () => notifications.filter(n => !readKeys.includes(n.key)).length,
+    [notifications, readKeys],
+  )
 
   const crumbs = BREADCRUMBS[pathname] ??
     (pathname.startsWith('/requests/') ? ['คำร้องทั้งหมด', 'รายละเอียดคำร้อง'] : [])
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(NOTIF_READ_KEY)
+      if (raw) setReadKeys(JSON.parse(raw) as string[])
+    } catch { /* ignore corrupt value */ }
+  }, [])
+
+  function persistRead(keys: string[]) {
+    setReadKeys(keys)
+    localStorage.setItem(NOTIF_READ_KEY, JSON.stringify(keys))
+  }
+
+  function openNotif(key: string, reqId: string, evIdx: number) {
+    if (!readKeys.includes(key)) persistRead([...readKeys, key])
+    setShowNotif(false)
+    router.push(`/requests/${reqId}?from=${encodeURIComponent(pathname)}&ev=${evIdx}`)
+  }
+
+  function markAllRead() {
+    persistRead(Array.from(new Set([...readKeys, ...notifications.map(n => n.key)])))
+  }
 
   useEffect(() => {
     const handle = (e: MouseEvent) => {
@@ -90,22 +151,34 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           <div className="absolute top-[calc(100%+4px)] right-0 w-[320px] md:w-[360px] bg-white border border-gray-200 rounded-lg shadow-xl z-[150] overflow-hidden">
             <div className="px-4 py-3.5 border-b border-gray-200 flex items-center justify-between">
               <span className="text-[13px] font-semibold">การแจ้งเตือน</span>
-              <button className="text-gray-500 hover:text-gray-900 text-[11px] bg-transparent border-none">อ่านทั้งหมด</button>
+              {unread > 0 && (
+                <button className="text-gray-500 hover:text-gray-900 text-[11px] bg-transparent border-none" onClick={markAllRead}>อ่านทั้งหมด</button>
+              )}
             </div>
             <div className="max-h-[420px] overflow-y-auto">
-              {[
-                { title: 'คำร้องรออนุมัติ', time: '2 นาทีที่แล้ว', unread: true },
-                { title: 'ได้รับมอบหมายงานใหม่', time: '1 ชั่วโมงที่แล้ว', unread: true },
-                { title: 'คำร้องของคุณเสร็จสิ้น', time: '3 ชั่วโมงที่แล้ว', unread: false },
-              ].map((n, i) => (
-                <div key={i} className={`px-4 py-3 flex gap-2.5 cursor-pointer border-b border-gray-200 transition-colors hover:bg-gray-50 ${n.unread ? 'bg-indigo-50' : ''}`}>
-                  {n.unread && <div className="w-[6px] h-[6px] rounded-full bg-indigo-600 flex-shrink-0 mt-[7px]"/>}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-medium text-gray-900">{n.title}</div>
-                    <div className="text-[11px] text-gray-400 mt-[2px]">{n.time}</div>
-                  </div>
-                </div>
-              ))}
+              {notifications.length === 0 ? (
+                <div className="px-4 py-10 text-center text-[12px] text-gray-400">ไม่มีการแจ้งเตือน</div>
+              ) : notifications.map(n => {
+                const isUnread = !readKeys.includes(n.key)
+                return (
+                  <button
+                    key={n.key}
+                    onClick={() => openNotif(n.key, n.reqId, n.evIdx)}
+                    className={`w-full text-left px-4 py-3 flex gap-2.5 cursor-pointer border-b border-gray-200 transition-colors hover:bg-gray-50 ${isUnread ? 'bg-indigo-50' : 'opacity-60'}`}
+                  >
+                    {isUnread
+                      ? <div className="w-[6px] h-[6px] rounded-full bg-indigo-600 flex-shrink-0 mt-[7px]"/>
+                      : <div className="w-[6px] flex-shrink-0"/>}
+                    <div className="flex-1 min-w-0">
+                      <div className={`text-[13px] ${isUnread ? 'text-gray-900' : 'text-gray-500'}`}>
+                        <span className={isUnread ? 'font-semibold' : 'font-medium'}>{n.actorName}</span> {KIND_LABEL[n.kind] ?? 'อัปเดตคำร้อง'}
+                      </div>
+                      <div className={`text-[12px] truncate mt-[1px] ${isUnread ? 'text-gray-600' : 'text-gray-400'}`}>{n.reqTitle}</div>
+                      <div className="text-[11px] text-gray-400 mt-[2px]">{fmtRelative(n.time)}</div>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}

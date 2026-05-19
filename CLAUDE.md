@@ -41,7 +41,7 @@ Prisma 7 differs sharply from 6 and earlier — most online examples are wrong f
 - **No `url` in `schema.prisma`.** The `datasource db` block has only `provider = "mysql"`. The connection URL lives in `prisma.config.ts` (`datasource.url` reads `process.env.DATABASE_URL`). Putting `url` back in the schema fails validation (`P1012`).
 - **`.env` is not auto-loaded by the Prisma CLI.** `prisma.config.ts` does `import "dotenv/config"`; standalone scripts (e.g. `prisma/seed.ts`) must `import 'dotenv/config'` themselves.
 - **Driver adapters are mandatory.** `PrismaClient` cannot connect on its own — it must be constructed with `new PrismaClient({ adapter })` where `adapter = new PrismaMariaDb(process.env.DATABASE_URL!)`. The MySQL adapter package is `@prisma/adapter-mariadb` (works for MySQL too); there is no `@prisma/adapter-mysql2`.
-- **Generated client is committed in-tree** at `lib/generated/prisma/` (no `index.ts` — import from `lib/generated/prisma/client`). `lib/db.ts` exports the shared singleton `db`; use it for all server-side queries.
+- **Generated client lives at `lib/generated/prisma/`** but is **gitignored** — run `npx prisma generate` after a fresh clone or any `schema.prisma` change. There is no `index.ts`; import from `lib/generated/prisma/client`. `lib/db.ts` exports the shared singleton `db`; use it for all server-side queries. Server-side data access goes through Server Actions in `app/actions.ts` (`getStore` + one function per mutation); `AppProvider` calls these and refetches `getStore` after each write.
 
 ## Architecture
 

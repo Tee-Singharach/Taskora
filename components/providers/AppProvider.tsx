@@ -1,30 +1,31 @@
 'use client'
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react'
-import type { AppStore, User, Department, Request, RequestStatus, RequestPriority, ToastItem, AuditEntry } from '@/lib/types'
-import { loadStore, saveStore } from '@/lib/store'
-import { genId, fullName } from '@/lib/utils'
+import type { AppStore, User, Department, Request, RequestStatus, ToastItem } from '@/lib/types'
+import { genId } from '@/lib/utils'
+import * as api from '@/app/actions'
 
 interface AppContextType {
   store: AppStore
   currentUser: User | undefined
+  loading: boolean
   setCurrentUserId: (id: string) => void
-  addRequest: (data: Omit<Request, 'id' | 'createdAt' | 'events'>) => Request
-  updateRequest: (id: string, patch: Partial<Pick<Request, 'title' | 'description' | 'department' | 'priority' | 'dueAt' | 'attachments'>>) => void
-  takeRequest: (id: string) => void
-  reassignRequest: (id: string, assigneeId: string, note: string) => void
-  changeStatus: (id: string, status: RequestStatus, note: string) => void
-  updateProgress: (id: string, progress: number, note: string) => void
-  submitForApproval: (id: string) => void
-  approveRequest: (id: string, note: string) => void
-  rejectRequest: (id: string, note: string) => void
-  addComment: (id: string, msg: string) => void
-  addUser: (data: Omit<User, 'id'>) => void
-  updateUser: (id: string, patch: Partial<User>) => void
-  deleteUser: (id: string) => void
-  addDept: (data: Department) => void
-  updateDept: (id: string, patch: Partial<Omit<Department, 'id'>>) => void
-  deleteDept: (id: string) => void
+  addRequest: (data: Omit<Request, 'id' | 'createdAt' | 'events'>) => Promise<Request>
+  updateRequest: (id: string, patch: Partial<Pick<Request, 'title' | 'description' | 'department' | 'priority' | 'dueAt' | 'attachments'>>) => Promise<void>
+  takeRequest: (id: string) => Promise<void>
+  reassignRequest: (id: string, assigneeId: string, note: string) => Promise<void>
+  changeStatus: (id: string, status: RequestStatus, note: string) => Promise<void>
+  updateProgress: (id: string, progress: number, note: string) => Promise<void>
+  submitForApproval: (id: string) => Promise<void>
+  approveRequest: (id: string, note: string) => Promise<void>
+  rejectRequest: (id: string, note: string) => Promise<void>
+  addComment: (id: string, msg: string) => Promise<void>
+  addUser: (data: Omit<User, 'id'>) => Promise<void>
+  updateUser: (id: string, patch: Partial<User>) => Promise<void>
+  deleteUser: (id: string) => Promise<void>
+  addDept: (data: Department) => Promise<void>
+  updateDept: (id: string, patch: Partial<Omit<Department, 'id'>>) => Promise<void>
+  deleteDept: (id: string) => Promise<void>
   toasts: ToastItem[]
   showToast: (type: ToastItem['type'], message: string) => void
   removeToast: (id: string) => void
@@ -32,13 +33,18 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | null>(null)
 
-export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [store, setStore] = useState<AppStore>({ users: [], departments: [], requests: [], auditLog: [], currentUserId: 'u01', schemaVersion: 3 })
-  const [toasts, setToasts] = useState<ToastItem[]>([])
-  const [mounted, setMounted] = useState(false)
+const UID_KEY = 'taskora_uid'
+const SCHEMA_VERSION = 4
 
-  useEffect(() => { setStore(loadStore()); setMounted(true) }, [])
-  useEffect(() => { if (mounted) saveStore(store) }, [store, mounted])
+const EMPTY: AppStore = {
+  users: [], departments: [], requests: [], auditLog: [],
+  currentUserId: 'u01', schemaVersion: SCHEMA_VERSION,
+}
+
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [store, setStore] = useState<AppStore>(EMPTY)
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+  const [loading, setLoading] = useState(true)
 
   const showToast = useCallback((type: ToastItem['type'], message: string) => {
     const id = genId('toast')
@@ -50,245 +56,91 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
+  const refresh = useCallback(async () => {
+    const data = await api.getStore()
+    setStore(prev => ({ ...data, currentUserId: prev.currentUserId, schemaVersion: SCHEMA_VERSION }))
+  }, [])
+
+  useEffect(() => {
+    const uid = (typeof window !== 'undefined' && localStorage.getItem(UID_KEY)) || 'u01'
+    api.getStore()
+      .then(data => setStore({ ...data, currentUserId: uid, schemaVersion: SCHEMA_VERSION }))
+      .catch(() => showToast('error', 'โหลดข้อมูลจากเซิร์ฟเวอร์ไม่สำเร็จ'))
+      .finally(() => setLoading(false))
+  }, [showToast])
+
   const setCurrentUserId = useCallback((id: string) => {
+    if (typeof window !== 'undefined') localStorage.setItem(UID_KEY, id)
     setStore(prev => ({ ...prev, currentUserId: id }))
   }, [])
 
-  const pushAudit = useCallback((store: AppStore, action: string, target: string, detail: string, cat: AuditEntry['cat']): AuditEntry => ({
-    id: genId('a'),
-    time: new Date().toISOString(),
-    actor: store.currentUserId,
-    action,
-    target,
-    detail,
-    cat,
-  }), [])
-
-  const addRequest = useCallback((data: Omit<Request, 'id' | 'createdAt' | 'events'>) => {
-    const now = new Date().toISOString()
-    const req: Request = {
-      ...data,
-      id: `REQ-${Date.now()}`,
-      createdAt: now,
-      events: [{ kind: 'system', actorId: data.requesterId, time: now, msg: 'สร้างคำร้องและส่งเข้าระบบ' }],
+  // Wrap a server mutation: run it, refetch, toast. Errors surface as an error toast.
+  const run = useCallback(async (fn: () => Promise<void>, successMsg: string | null, msgType: ToastItem['type'] = 'success') => {
+    try {
+      await fn()
+      await refresh()
+      if (successMsg) showToast(msgType, successMsg)
+    } catch {
+      showToast('error', 'ดำเนินการไม่สำเร็จ กรุณาลองใหม่')
     }
-    setStore(prev => ({
-      ...prev,
-      requests: [...prev.requests, req],
-      auditLog: [...prev.auditLog, pushAudit(prev, 'สร้างคำร้องใหม่', req.id, req.title, 'workflow')],
-    }))
+  }, [refresh, showToast])
+
+  const addRequest = useCallback(async (data: Omit<Request, 'id' | 'createdAt' | 'events'>) => {
+    const req = await api.createRequest(data, store.currentUserId)
+    await refresh()
     return req
-  }, [pushAudit])
+  }, [store.currentUserId, refresh])
 
-  const updateRequest = useCallback((id: string, patch: Partial<Pick<Request, 'title' | 'description' | 'department' | 'priority' | 'dueAt' | 'attachments'>>) => {
-    setStore(prev => ({
-      ...prev,
-      requests: prev.requests.map(r => r.id === id ? { ...r, ...patch } : r),
-    }))
-    showToast('success', 'บันทึกการแก้ไขเรียบร้อย')
-  }, [showToast])
+  const updateRequest = useCallback((id: string, patch: Partial<Pick<Request, 'title' | 'description' | 'department' | 'priority' | 'dueAt' | 'attachments'>>) =>
+    run(() => api.editRequest(id, patch), 'บันทึกการแก้ไขเรียบร้อย'), [run])
 
-  const addEvent = useCallback((id: string, kind: 'system' | 'comment' | 'approve' | 'reject', msg: string) => {
-    const ev = { kind, actorId: '' as string, time: new Date().toISOString(), msg }
-    setStore(prev => {
-      ev.actorId = prev.currentUserId
-      return {
-        ...prev,
-        requests: prev.requests.map(r => r.id === id ? { ...r, events: [...r.events, ev] } : r),
-      }
-    })
-  }, [])
+  const takeRequest = useCallback((id: string) =>
+    run(() => api.takeRequest(id, store.currentUserId), 'รับงานเรียบร้อย เริ่มดำเนินการได้เลย'), [run, store.currentUserId])
 
-  const takeRequest = useCallback((id: string) => {
-    setStore(prev => {
-      const req = prev.requests.find(r => r.id === id)
-      if (!req) return prev
-      const u = prev.users.find(u => u.id === prev.currentUserId)
-      const now = new Date().toISOString()
-      const ev = { kind: 'system' as const, actorId: prev.currentUserId, time: now, msg: `${u ? fullName(u) : '—'} รับงานและเริ่มดำเนินการ` }
-      return {
-        ...prev,
-        requests: prev.requests.map(r => r.id === id
-          ? { ...r, status: 'in_progress', assigneeId: prev.currentUserId, events: [...r.events, ev] }
-          : r),
-        auditLog: [...prev.auditLog, pushAudit(prev, 'รับงาน', id, 'เริ่มดำเนินการ', 'workflow')],
-      }
-    })
-    showToast('success', 'รับงานเรียบร้อย เริ่มดำเนินการได้เลย')
-  }, [showToast, pushAudit])
+  const reassignRequest = useCallback((id: string, assigneeId: string, note: string) =>
+    run(() => api.reassignRequest(id, assigneeId, store.currentUserId, note), 'มอบหมายงานเรียบร้อย'), [run, store.currentUserId])
 
-  const reassignRequest = useCallback((id: string, assigneeId: string, note: string) => {
-    setStore(prev => {
-      const assignee = prev.users.find(u => u.id === assigneeId)
-      const now = new Date().toISOString()
-      const ev = { kind: 'system' as const, actorId: prev.currentUserId, time: now, msg: `มอบหมายงานให้ ${assignee ? fullName(assignee) : assigneeId}${note ? ' — ' + note : ''}` }
-      return {
-        ...prev,
-        requests: prev.requests.map(r => r.id === id
-          ? { ...r, assigneeId, events: [...r.events, ev] }
-          : r),
-        auditLog: [...prev.auditLog, pushAudit(prev, 'มอบหมายงาน', id, `ส่งต่อให้ ${assignee ? fullName(assignee) : assigneeId}`, 'workflow')],
-      }
-    })
-    showToast('success', 'มอบหมายงานเรียบร้อย')
-  }, [showToast, pushAudit])
+  const changeStatus = useCallback((id: string, status: RequestStatus, note: string) =>
+    run(() => api.changeStatus(id, status, store.currentUserId, note), 'อัปเดตสถานะเรียบร้อย'), [run, store.currentUserId])
 
-  const changeStatus = useCallback((id: string, status: RequestStatus, note: string) => {
-    setStore(prev => {
-      const now = new Date().toISOString()
-      const ev = { kind: 'system' as const, actorId: prev.currentUserId, time: now, msg: note || `เปลี่ยนสถานะงาน` }
-      return {
-        ...prev,
-        requests: prev.requests.map(r => r.id === id
-          ? { ...r, status, events: [...r.events, ev] }
-          : r),
-        auditLog: [...prev.auditLog, pushAudit(prev, 'เปลี่ยนสถานะ', id, status, 'workflow')],
-      }
-    })
-    showToast('success', 'อัปเดตสถานะเรียบร้อย')
-  }, [showToast, pushAudit])
+  const updateProgress = useCallback((id: string, progress: number, note: string) =>
+    run(() => api.updateProgress(id, progress, store.currentUserId, note), `บันทึกความคืบหน้า ${progress}% เรียบร้อย`), [run, store.currentUserId])
 
-  const updateProgress = useCallback((id: string, progress: number, note: string) => {
-    setStore(prev => {
-      const now = new Date().toISOString()
-      const ev = { kind: 'system' as const, actorId: prev.currentUserId, time: now, msg: `อัปเดตความคืบหน้า ${progress}% — ${note}` }
-      return {
-        ...prev,
-        requests: prev.requests.map(r => r.id === id
-          ? { ...r, progress, events: [...r.events, ev] }
-          : r),
-      }
-    })
-    showToast('success', `บันทึกความคืบหน้า ${progress}% เรียบร้อย`)
-  }, [showToast])
+  const submitForApproval = useCallback((id: string) =>
+    run(() => api.submitForApproval(id, store.currentUserId), 'ส่งให้พิจารณาอนุมัติเรียบร้อย'), [run, store.currentUserId])
 
-  const submitForApproval = useCallback((id: string) => {
-    setStore(prev => {
-      const now = new Date().toISOString()
-      const approver = prev.requests.find(r => r.id === id)?.approverId
-      const approverUser = prev.users.find(u => u.id === approver)
-      const approverName = approverUser ? fullName(approverUser) : 'หัวหน้างาน'
-      const ev = { kind: 'system' as const, actorId: prev.currentUserId, time: now, msg: `ส่งเรื่องให้ ${approverName} พิจารณาอนุมัติ` }
-      return {
-        ...prev,
-        requests: prev.requests.map(r => r.id === id
-          ? { ...r, status: 'waiting_approval', progress: 95, events: [...r.events, ev] }
-          : r),
-        auditLog: [...prev.auditLog, pushAudit(prev, 'ส่งอนุมัติ', id, 'รออนุมัติ', 'workflow')],
-      }
-    })
-    showToast('success', 'ส่งให้พิจารณาอนุมัติเรียบร้อย')
-  }, [showToast, pushAudit])
+  const approveRequest = useCallback((id: string, note: string) =>
+    run(() => api.approveRequest(id, store.currentUserId, note), 'อนุมัติคำร้องเรียบร้อย'), [run, store.currentUserId])
 
-  const approveRequest = useCallback((id: string, note: string) => {
-    setStore(prev => {
-      const now = new Date().toISOString()
-      const ev = { kind: 'approve' as const, actorId: prev.currentUserId, time: now, msg: note || 'อนุมัติเรียบร้อย' }
-      return {
-        ...prev,
-        requests: prev.requests.map(r => r.id === id
-          ? { ...r, status: 'completed', progress: 100, events: [...r.events, ev] }
-          : r),
-        auditLog: [...prev.auditLog, pushAudit(prev, 'อนุมัติคำร้อง', id, note || 'อนุมัติ', 'workflow')],
-      }
-    })
-    showToast('success', 'อนุมัติคำร้องเรียบร้อย')
-  }, [showToast, pushAudit])
+  const rejectRequest = useCallback((id: string, note: string) =>
+    run(() => api.rejectRequest(id, store.currentUserId, note), 'ปฏิเสธคำร้องแล้ว', 'warning'), [run, store.currentUserId])
 
-  const rejectRequest = useCallback((id: string, note: string) => {
-    setStore(prev => {
-      const now = new Date().toISOString()
-      const ev = { kind: 'reject' as const, actorId: prev.currentUserId, time: now, msg: note }
-      return {
-        ...prev,
-        requests: prev.requests.map(r => r.id === id
-          ? { ...r, status: 'rejected', events: [...r.events, ev] }
-          : r),
-        auditLog: [...prev.auditLog, pushAudit(prev, 'ปฏิเสธคำร้อง', id, note, 'workflow')],
-      }
-    })
-    showToast('warning', 'ปฏิเสธคำร้องแล้ว')
-  }, [showToast, pushAudit])
+  const addComment = useCallback((id: string, msg: string) =>
+    run(() => api.addComment(id, store.currentUserId, msg), 'เพิ่มความคิดเห็นแล้ว'), [run, store.currentUserId])
 
-  const addComment = useCallback((id: string, msg: string) => {
-    setStore(prev => {
-      const now = new Date().toISOString()
-      const ev = { kind: 'comment' as const, actorId: prev.currentUserId, time: now, msg }
-      return {
-        ...prev,
-        requests: prev.requests.map(r => r.id === id
-          ? { ...r, events: [...r.events, ev] }
-          : r),
-      }
-    })
-    showToast('success', 'เพิ่มความคิดเห็นแล้ว')
-  }, [showToast])
+  const addUser = useCallback((data: Omit<User, 'id'>) =>
+    run(() => api.addUser(data, store.currentUserId), 'เพิ่มผู้ใช้เรียบร้อย'), [run, store.currentUserId])
 
-  const addUser = useCallback((data: Omit<User, 'id'>) => {
-    setStore(prev => ({
-      ...prev,
-      users: [...prev.users, { ...data, id: genId('u') }],
-      auditLog: [...prev.auditLog, pushAudit(prev, 'สร้างผู้ใช้ใหม่', fullName(data), `${data.email}`, 'user')],
-    }))
-    showToast('success', 'เพิ่มผู้ใช้เรียบร้อย')
-  }, [showToast, pushAudit])
+  const updateUser = useCallback((id: string, patch: Partial<User>) =>
+    run(() => api.updateUser(id, patch, store.currentUserId), 'อัปเดตข้อมูลผู้ใช้แล้ว'), [run, store.currentUserId])
 
-  const updateUser = useCallback((id: string, patch: Partial<User>) => {
-    setStore(prev => ({
-      ...prev,
-      users: prev.users.map(u => u.id === id ? { ...u, ...patch } : u),
-      auditLog: [...prev.auditLog, pushAudit(prev, 'อัปเดตข้อมูลผู้ใช้', id, '', 'user')],
-    }))
-    showToast('success', 'อัปเดตข้อมูลผู้ใช้แล้ว')
-  }, [showToast, pushAudit])
+  const deleteUser = useCallback((id: string) =>
+    run(() => api.deleteUser(id, store.currentUserId), 'ลบผู้ใช้แล้ว', 'warning'), [run, store.currentUserId])
 
-  const deleteUser = useCallback((id: string) => {
-    setStore(prev => {
-      const u = prev.users.find(u => u.id === id)
-      return {
-        ...prev,
-        users: prev.users.filter(u => u.id !== id),
-        auditLog: [...prev.auditLog, pushAudit(prev, 'ลบผู้ใช้', u ? fullName(u) : id, '', 'user')],
-      }
-    })
-    showToast('warning', 'ลบผู้ใช้แล้ว')
-  }, [showToast, pushAudit])
+  const addDept = useCallback((data: Department) =>
+    run(() => api.addDept(data, store.currentUserId), 'เพิ่มแผนกเรียบร้อย'), [run, store.currentUserId])
 
-  const addDept = useCallback((data: Department) => {
-    setStore(prev => ({
-      ...prev,
-      departments: [...prev.departments, data],
-      auditLog: [...prev.auditLog, pushAudit(prev, 'สร้างแผนกใหม่', data.id, data.name, 'system')],
-    }))
-    showToast('success', 'เพิ่มแผนกเรียบร้อย')
-  }, [showToast, pushAudit])
+  const updateDept = useCallback((id: string, patch: Partial<Omit<Department, 'id'>>) =>
+    run(() => api.updateDept(id, patch, store.currentUserId), 'อัปเดตแผนกแล้ว'), [run, store.currentUserId])
 
-  const updateDept = useCallback((id: string, patch: Partial<Omit<Department, 'id'>>) => {
-    setStore(prev => ({
-      ...prev,
-      departments: prev.departments.map(d => d.id === id ? { ...d, ...patch } : d),
-      auditLog: [...prev.auditLog, pushAudit(prev, 'แก้ไขข้อมูลแผนก', id, '', 'system')],
-    }))
-    showToast('success', 'อัปเดตแผนกแล้ว')
-  }, [showToast, pushAudit])
-
-  const deleteDept = useCallback((id: string) => {
-    setStore(prev => {
-      const d = prev.departments.find(d => d.id === id)
-      return {
-        ...prev,
-        departments: prev.departments.filter(d => d.id !== id),
-        auditLog: [...prev.auditLog, pushAudit(prev, 'ลบแผนก', d?.name ?? id, '', 'system')],
-      }
-    })
-    showToast('warning', 'ลบแผนกแล้ว')
-  }, [showToast, pushAudit])
+  const deleteDept = useCallback((id: string) =>
+    run(() => api.deleteDept(id, store.currentUserId), 'ลบแผนกแล้ว', 'warning'), [run, store.currentUserId])
 
   const currentUser = useMemo(() => store.users.find(u => u.id === store.currentUserId), [store.users, store.currentUserId])
 
   return (
     <AppContext.Provider value={{
-      store, currentUser, setCurrentUserId,
+      store, currentUser, loading, setCurrentUserId,
       addRequest, updateRequest, takeRequest, reassignRequest,
       changeStatus, updateProgress, submitForApproval,
       approveRequest, rejectRequest, addComment,

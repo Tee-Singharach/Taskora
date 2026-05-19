@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/components/providers/AppProvider'
 import {
@@ -27,9 +27,9 @@ const WF_ORDER = WF_STEPS.map(s => s.key)
 
 type ModalKind = null | 'approve' | 'reject' | 'assign' | 'progress' | 'status' | 'take'
 
-export default function RequestDetailPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ from?: string }> }) {
+export default function RequestDetailPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ from?: string, ev?: string }> }) {
   const { id } = use(params)
-  const { from } = use(searchParams)
+  const { from, ev } = use(searchParams)
   const {
     store, currentUser,
     takeRequest, reassignRequest, changeStatus,
@@ -44,6 +44,22 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
 
   const [modal, setModal]     = useState<ModalKind>(null)
   const [comment, setComment] = useState('')
+  const [highlightIdx, setHighlightIdx] = useState<number | null>(null)
+
+  const eventCount = request?.events.length ?? 0
+  useEffect(() => {
+    if (ev == null || !request) return
+    const idx = Number(ev)
+    if (Number.isNaN(idx)) return
+    const t = setTimeout(() => {
+      const el = document.getElementById(`ev-${idx}`)
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setHighlightIdx(idx)
+      setTimeout(() => setHighlightIdx(null), 1200)
+    }, 150)
+    return () => clearTimeout(t)
+  }, [ev, request?.id, eventCount])
 
   if (!request) {
     return (
@@ -193,7 +209,11 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
                 {request.events.map((ev, i) => {
                   const actor = store.users.find(u => u.id === ev.actorId)
                   return (
-                    <div key={i} className="flex gap-3">
+                    <div
+                      key={i}
+                      id={`ev-${i}`}
+                      className={`flex gap-3 transition-all duration-300 ${highlightIdx === i ? 'ring-2 ring-indigo-400 bg-indigo-50/60 rounded-lg -m-1.5 p-1.5' : ''}`}
+                    >
                       <Avatar name={actor ? fullName(actor) : 'ระบบ'} size="sm"/>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2 mb-1">

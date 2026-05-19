@@ -60,12 +60,12 @@ export default function NewRequestPage() {
     return Object.keys(e).length === 0
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!validate()) return
     if (saving) return
     setSaving(true)
     try {
-      const req = addRequest({
+      const req = await addRequest({
         title: form.title.trim(),
         description: form.description.trim(),
         department: form.department,
