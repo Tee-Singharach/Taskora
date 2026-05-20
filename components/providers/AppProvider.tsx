@@ -23,6 +23,7 @@ interface AppContextType {
   addComment: (id: string, msg: string) => Promise<void>
   addUser: (data: Omit<User, 'id'>) => Promise<void>
   updateUser: (id: string, patch: Partial<User>) => Promise<void>
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>
   deleteUser: (id: string) => Promise<void>
   addDept: (data: Department) => Promise<void>
   updateDept: (id: string, patch: Partial<Omit<Department, 'id'>>) => Promise<void>
@@ -128,6 +129,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateUser = useCallback((id: string, patch: Partial<User>) =>
     run(() => api.updateUser(id, patch, store.currentUserId), 'อัปเดตข้อมูลผู้ใช้แล้ว'), [run, store.currentUserId])
 
+  const changePassword = useCallback((currentPassword: string, newPassword: string) =>
+    run(() => api.changePassword(store.currentUserId, currentPassword, newPassword, store.currentUserId), 'เปลี่ยนรหัสผ่านเรียบร้อย'), [run, store.currentUserId])
+
   const deleteUser = useCallback((id: string) =>
     run(() => api.deleteUser(id, store.currentUserId), 'ลบผู้ใช้แล้ว', 'warning'), [run, store.currentUserId])
 
@@ -148,7 +152,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addRequest, updateRequest, deleteRequest, takeRequest, reassignRequest,
       changeStatus, updateProgress, submitForApproval,
       approveRequest, rejectRequest, addComment,
-      addUser, updateUser, deleteUser,
+      addUser, updateUser, changePassword, deleteUser,
       addDept, updateDept, deleteDept,
       toasts, showToast, removeToast,
     }}>

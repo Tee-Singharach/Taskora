@@ -49,8 +49,8 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       return
     }
 
-    // Admin is restricted to /admin/* paths only
-    if (role === 'admin' && !isAdminPath) {
+    // Admin is restricted to /admin/* paths only (settings is allowed for all)
+    if (role === 'admin' && !isAdminPath && pathname !== '/settings') {
       router.replace('/admin/users')
       return
     }

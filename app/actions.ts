@@ -228,6 +228,16 @@ export async function updateUser(id: string, patch: Partial<User>, actorId: stri
   await pushAudit(actorId, 'อัปเดตข้อมูลผู้ใช้', id, '', 'user')
 }
 
+export async function changePassword(id: string, currentPassword: string, newPassword: string, actorId: string) {
+  const user = await db.user.findUnique({ where: { id } })
+  if (!user) throw new Error('ไม่พบผู้ใช้')
+  if (user.password && user.password !== '' && user.password !== currentPassword) {
+    throw new Error('รหัสผ่านปัจจุบันไม่ถูกต้อง')
+  }
+  await db.user.update({ where: { id }, data: { password: newPassword } })
+  await pushAudit(actorId, 'เปลี่ยนรหัสผ่าน', id, '', 'security')
+}
+
 export async function deleteUser(id: string, actorId: string) {
   const name = await userName(id)
   await db.user.delete({ where: { id } })

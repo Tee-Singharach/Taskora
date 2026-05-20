@@ -10,7 +10,8 @@
       "PowerShell(Get-Process *)",
       "Bash(taskkill *)",
       "PowerShell(Stop-Process *)",
-      "Bash(npx prisma *)"
+      "Bash(npx prisma *)",
+      "PowerShell(cmd /c \"dir /a E:\\\\testProjactClaude\\\\Taskora\\\\storage\\\\uploads\")"
     ]
   }
 }

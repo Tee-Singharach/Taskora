@@ -35,7 +35,7 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
     store, currentUser,
     takeRequest, reassignRequest, changeStatus,
     updateProgress, deleteRequest,
-    approveRequest, rejectRequest, addComment,
+    approveRequest, rejectRequest, addComment, showToast,
   } = useApp()
   const router = useRouter()
 
@@ -45,9 +45,12 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
 
   const [modal, setModal]           = useState<ModalKind>(null)
   const [comment, setComment]       = useState('')
+  const [commentFiles, setCommentFiles] = useState<File[]>([])
+  const [sendingComment, setSendingComment] = useState(false)
   const [highlightIdx, setHighlightIdx] = useState<number | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting]     = useState(false)
+  const [previewFile, setPreviewFile] = useState<{ url: string; name: string } | null>(null)
 
   const eventCount = request?.events.length ?? 0
   useEffect(() => {
@@ -112,10 +115,31 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
     router.push(backPath)
   }
 
-  function handleComment() {
-    if (!comment.trim()) return
-    addComment(id, comment.trim())
-    setComment('')
+  async function handleComment() {
+    if (!comment.trim() && commentFiles.length === 0) return
+    if (sendingComment) return
+    setSendingComment(true)
+    try {
+      const uploaded = await Promise.all(
+        commentFiles.map(async f => {
+          const fd = new FormData()
+          fd.append('file', f)
+          const res = await fetch('/api/upload', { method: 'POST', body: fd })
+          if (!res.ok) throw new Error(`อัปโหลด "${f.name}" ไม่สำเร็จ`)
+          return res.json() as Promise<{ name: string; url: string }>
+        })
+      )
+      const msg = uploaded.length > 0
+        ? `${comment.trim()}|||${JSON.stringify(uploaded)}`
+        : comment.trim()
+      await addComment(id, msg)
+      setComment('')
+      setCommentFiles([])
+    } catch (err) {
+      showToast('error', err instanceof Error ? err.message : 'ส่งความคิดเห็นไม่สำเร็จ')
+    } finally {
+      setSendingComment(false)
+    }
   }
 
   return (
@@ -219,17 +243,36 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
             <div className="bg-white border border-gray-200 rounded-lg">
               <div className="px-5 py-4 border-b border-gray-200 font-semibold text-[15px]">เอกสารแนบ ({request.attachments.length})</div>
               <div className="p-5 flex flex-col gap-2">
-                {request.attachments.map((a, i) => (
+                {request.attachments.map((a, i) => {
+                  const canPreview = a.url && /\.(pdf|png|jpe?g)$/i.test(a.name)
+                  return (
                   <div key={i} className="flex items-center gap-2.5 p-2.5 bg-slate-50 border border-gray-200 rounded-md text-[13px]">
-                    <Icon name="paperclip" size={14} className="text-gray-400"/>
-                    <span className="flex-1 truncate text-gray-900">{a.name}</span>
-                    <span className="text-[11px] text-gray-400 font-mono">{a.size}</span>
-                    {a.url
-                      ? <a href={a.url} download={a.name} className="text-indigo-600 hover:text-indigo-800 transition-colors"><Icon name="download" size={13}/></a>
-                      : <span className="text-gray-300 cursor-not-allowed"><Icon name="download" size={13}/></span>
-                    }
+                    <Icon name="paperclip" size={14} className="text-gray-400 flex-shrink-0"/>
+                    <button
+                      className={`flex-1 truncate text-left ${canPreview ? 'text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer' : 'text-gray-900 cursor-default'}`}
+                      onClick={() => canPreview && setPreviewFile({ url: a.url!, name: a.name })}
+                      title={canPreview ? 'คลิกเพื่อดูตัวอย่าง' : a.name}
+                    >
+                      {a.name}
+                    </button>
+                    <span className="text-[11px] text-gray-400 font-mono flex-shrink-0">{a.size}</span>
+                    {a.url ? (
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {canPreview && (
+                          <button onClick={() => setPreviewFile({ url: a.url!, name: a.name })} className="text-indigo-600 hover:text-indigo-800 transition-colors" title="ดูตัวอย่าง">
+                            <Icon name="eye" size={13}/>
+                          </button>
+                        )}
+                        <a href={a.url} download={a.name} className="text-gray-400 hover:text-gray-700 transition-colors" title="ดาวน์โหลด">
+                          <Icon name="download" size={13}/>
+                        </a>
+                      </div>
+                    ) : (
+                      <span className="text-gray-300 cursor-not-allowed flex-shrink-0"><Icon name="download" size={13}/></span>
+                    )}
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
@@ -253,7 +296,37 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
                           <span className="text-[11px] text-gray-400">{fmtRelative(ev.time)}</span>
                         </div>
                         <div className={`p-2.5 px-3 rounded-md text-[13px] border ${ev.kind === 'approve' ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : ev.kind === 'reject' ? 'bg-red-50 text-red-800 border-red-100' : 'bg-gray-50 border-gray-100 text-gray-800'}`}>
-                          {ev.msg}
+                          {(() => {
+                            const [text, filesPart] = ev.msg.split('|||')
+                            const files: { name: string; url: string }[] = filesPart ? JSON.parse(filesPart) : []
+                            return (
+                              <>
+                                {text && <p className="m-0 whitespace-pre-wrap">{text}</p>}
+                                {files.length > 0 && (
+                                  <div className={`flex flex-col gap-1 ${text ? 'mt-2 pt-2 border-t border-current/10' : ''}`}>
+                                    {files.map((f, fi) => {
+                                      const canPrev = /\.(pdf|png|jpe?g)$/i.test(f.name)
+                                      return (
+                                        <div key={fi} className="flex items-center gap-1.5">
+                                          <Icon name="paperclip" size={11} className="flex-shrink-0 opacity-60"/>
+                                          {canPrev ? (
+                                            <button className="text-left underline underline-offset-2 opacity-80 hover:opacity-100 truncate max-w-[200px]" onClick={() => setPreviewFile({ url: f.url, name: f.name })}>
+                                              {f.name}
+                                            </button>
+                                          ) : (
+                                            <a href={f.url} download={f.name} className="underline underline-offset-2 opacity-80 hover:opacity-100 truncate max-w-[200px]">{f.name}</a>
+                                          )}
+                                          <a href={f.url} download={f.name} className="opacity-50 hover:opacity-100 flex-shrink-0" title="ดาวน์โหลด">
+                                            <Icon name="download" size={11}/>
+                                          </a>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                )}
+                              </>
+                            )
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -269,13 +342,34 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
                   onChange={e => setComment(e.target.value)}
                   placeholder="เขียนความคิดเห็น..."
                 />
-                <div className="flex justify-end">
+                {commentFiles.length > 0 && (
+                  <div className="flex flex-col gap-1.5">
+                    {commentFiles.map((f, i) => (
+                      <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-indigo-50 border border-indigo-200 rounded-md text-[12px]">
+                        <Icon name="paperclip" size={12} className="text-indigo-400 flex-shrink-0"/>
+                        <span className="flex-1 truncate text-gray-700">{f.name}</span>
+                        <span className="text-gray-400">({(f.size/1024).toFixed(1)} KB)</span>
+                        <button onClick={() => setCommentFiles(prev => prev.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500 transition-colors">
+                          <Icon name="x" size={12}/>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-gray-200 text-[12px] text-gray-500 hover:bg-gray-50 cursor-pointer transition-colors">
+                    <Icon name="paperclip" size={13}/>
+                    แนบไฟล์
+                    <input type="file" multiple className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                      onChange={e => { if (e.target.files) setCommentFiles(prev => [...prev, ...Array.from(e.target.files!)]) }}
+                    />
+                  </label>
                   <button
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-md font-medium text-[14px] bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-md font-medium text-[13px] bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
                     onClick={handleComment}
-                    disabled={!comment.trim()}
+                    disabled={(!comment.trim() && commentFiles.length === 0) || sendingComment}
                   >
-                    <Icon name="send" size={14}/> ส่งความคิดเห็น
+                    <Icon name="send" size={13}/> {sendingComment ? 'กำลังส่ง...' : 'ส่ง'}
                   </button>
                 </div>
               </div>
@@ -384,6 +478,36 @@ export default function RequestDetailPage({ params, searchParams }: { params: Pr
           onClose={closeModal}
           onConfirm={status => { changeStatus(id, status, ''); closeModal() }}
         />
+      )}
+
+      {previewFile && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-[2px] p-4" onClick={() => setPreviewFile(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[900px] flex flex-col overflow-hidden" style={{ height: '88vh' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 flex-shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <Icon name="paperclip" size={14} className="text-gray-400 flex-shrink-0"/>
+                <span className="text-[14px] font-medium text-gray-900 truncate">{previewFile.name}</span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                <a href={previewFile.url} download={previewFile.name} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-gray-200 text-[12px] text-gray-600 hover:bg-gray-50 transition-colors">
+                  <Icon name="download" size={13}/> ดาวน์โหลด
+                </a>
+                <button onClick={() => setPreviewFile(null)} className="w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 transition-colors">
+                  <Icon name="x" size={16}/>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden bg-gray-100">
+              {/\.(png|jpe?g)$/i.test(previewFile.name) ? (
+                <div className="w-full h-full flex items-center justify-center p-4">
+                  <img src={previewFile.url} alt={previewFile.name} className="max-w-full max-h-full object-contain rounded-md shadow"/>
+                </div>
+              ) : (
+                <iframe src={previewFile.url} className="w-full h-full border-0" title={previewFile.name}/>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {confirmDelete && (

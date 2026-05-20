@@ -39,6 +39,8 @@ const ICONS: Record<string, string | string[]> = {
   paperclip:     'M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48',
   building:      ['M3 21h18','M5 21V7l7-4 7 4v14','M9 21v-4h6v4','M9 9h1v1H9z','M14 9h1v1h-1z','M9 14h1v1H9z','M14 14h1v1h-1z'],
   trash:         ['M3 6h18','M8 6V4h8v2','M19 6l-1 14H6L5 6'],
+  'external-link': ['M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6','M15 3h6v6','M10 14L21 3'],
+  'trash-2':     ['M3 6h18','M8 6V4h8v2','M19 6l-1 14H6L5 6','M10 11v6','M14 11v6'],
   menu:          ['M3 6h18','M3 12h18','M3 18h18'],
 }
 

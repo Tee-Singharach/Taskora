@@ -16,7 +16,7 @@ export default function ApproveModal({ onClose, onConfirm }: Props) {
       footer={
         <>
           <button className="px-4 py-2 text-[14px] rounded-md border border-gray-200 hover:bg-gray-50" onClick={onClose}>ยกเลิก</button>
-          <button className="px-4 py-2 text-[14px] rounded-md bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => onConfirm(note)}>
+          <button className="flex items-center gap-1.5 px-4 py-2 text-[14px] rounded-md bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => onConfirm(note)}>
             <Icon name="check" size={14}/> ยืนยันอนุมัติ
           </button>
         </>
